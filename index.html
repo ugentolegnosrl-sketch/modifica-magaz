@@ -40,7 +40,7 @@
       width: 100%;
       max-width: 760px;
       margin: 0 auto;
-      padding: 14px 14px 100px;
+      padding: 14px 14px 260px;
     }
 
     .topbar {
@@ -346,8 +346,9 @@
       bottom: 0;
       z-index: 40;
       padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-      background: linear-gradient(180deg, rgba(15,17,21,0.10), rgba(15,17,21,0.95) 25%, rgba(15,17,21,1));
+      background: linear-gradient(180deg, rgba(15,17,21,0.04), rgba(15,17,21,0.82) 28%, rgba(15,17,21,0.96));
       backdrop-filter: blur(12px);
+      pointer-events: none;
     }
 
     .clipboard {
@@ -355,9 +356,11 @@
       margin: 0 auto;
       border-radius: 22px;
       border: 1px solid var(--border);
-      background: #11151d;
+      background: rgba(17,21,29,0.94);
       box-shadow: var(--shadow);
       overflow: hidden;
+      pointer-events: auto;
+      max-height: 220px;
     }
 
     .clipboard-head {
@@ -370,7 +373,7 @@
     }
 
     .clipboard-body {
-      max-height: 180px;
+      max-height: 140px;
       overflow: auto;
       padding: 10px;
       display: flex;
@@ -396,6 +399,53 @@
       border: 1px dashed var(--border);
       border-radius: 18px;
       background: rgba(255,255,255,0.02);
+    }
+
+    .side-nav {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 55;
+      width: 28px;
+      height: 96px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(17,21,29,0.42);
+      color: rgba(241,245,249,0.92);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      pointer-events: auto;
+      transition: 0.18s ease;
+    }
+
+    .side-nav:hover {
+      background: rgba(17,21,29,0.72);
+    }
+
+    .side-nav:disabled {
+      opacity: 0.28;
+      cursor: default;
+    }
+
+    .side-nav.left {
+      left: 0;
+      border-left: 0;
+      border-radius: 0 14px 14px 0;
+    }
+
+    .side-nav.right {
+      right: 0;
+      border-right: 0;
+      border-radius: 14px 0 0 14px;
+    }
+
+    .side-nav .arrow {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
     }
 
     .modal-backdrop {
@@ -474,6 +524,9 @@
   </style>
 </head>
 <body>
+  <button class="side-nav left hidden" id="sidePrevShelfBtn" aria-label="Scaffale precedente"><span class="arrow">‹</span></button>
+  <button class="side-nav right hidden" id="sideNextShelfBtn" aria-label="Scaffale successivo"><span class="arrow">›</span></button>
+
   <div class="app">
     <div class="topbar">
       <div class="row space-between">
@@ -563,8 +616,6 @@
             <p class="muted small" id="shelfMeta"></p>
           </div>
           <div class="row" style="margin-left:auto;">
-            <button class="btn compact ghost" id="prevShelfBtn">← Prec.</button>
-            <button class="btn compact ghost" id="nextShelfBtn">Succ. →</button>
             <button class="btn compact primary" id="addProductBtn">+ Prodotto</button>
           </div>
         </div>
@@ -647,8 +698,8 @@
       addProductBtn: document.getElementById('addProductBtn'),
       pasteAllBtn: document.getElementById('pasteAllBtn'),
       saveNowBtn: document.getElementById('saveNowBtn'),
-      prevShelfBtn: document.getElementById('prevShelfBtn'),
-      nextShelfBtn: document.getElementById('nextShelfBtn'),
+      sidePrevShelfBtn: document.getElementById('sidePrevShelfBtn'),
+      sideNextShelfBtn: document.getElementById('sideNextShelfBtn'),
       clipboardBody: document.getElementById('clipboardBody'),
       clearClipboardBtn: document.getElementById('clearClipboardBtn'),
       modalRoot: document.getElementById('modalRoot')
@@ -923,6 +974,10 @@
       el.screenOrigin.classList.toggle('hidden', state.currentScreen !== 'origin');
       el.screenShelf.classList.toggle('hidden', state.currentScreen !== 'shelf');
       el.backBtn.classList.toggle('hidden', state.currentScreen === 'home');
+      el.sidePrevShelfBtn.classList.toggle('hidden', state.currentScreen !== 'shelf');
+      el.sideNextShelfBtn.classList.toggle('hidden', state.currentScreen !== 'shelf');
+      el.sidePrevShelfBtn.style.display = state.currentScreen === 'shelf' ? 'flex' : 'none';
+      el.sideNextShelfBtn.style.display = state.currentScreen === 'shelf' ? 'flex' : 'none';
 
       if (state.currentScreen === 'home') {
         el.pageTitle.textContent = 'Magazzino Mobile Offline';
@@ -1069,8 +1124,8 @@
 
       el.shelfTitle.textContent = `Scaffale ${label}`;
       el.shelfMeta.textContent = `${state.selectedOrigin} · ${records.length} prodotti${shelfIndex >= 0 ? ` · ${shelfIndex + 1}/${orderedShelves.length}` : ''}`;
-      el.prevShelfBtn.disabled = shelfIndex <= 0;
-      el.nextShelfBtn.disabled = shelfIndex === -1 || shelfIndex >= orderedShelves.length - 1;
+      el.sidePrevShelfBtn.disabled = shelfIndex <= 0;
+      el.sideNextShelfBtn.disabled = shelfIndex === -1 || shelfIndex >= orderedShelves.length - 1;
 
       if (!filtered.length) {
         el.productList.innerHTML = '<div class="empty">Nessun prodotto in questo scaffale.</div>';
@@ -1782,8 +1837,8 @@
     el.renameShelfBtn.addEventListener('click', () => promptRenameShelf());
     el.addShelfBtn.addEventListener('click', addShelf);
     el.addProductBtn.addEventListener('click', addProduct);
-    el.prevShelfBtn.addEventListener('click', () => goToAdjacentShelf(-1));
-    el.nextShelfBtn.addEventListener('click', () => goToAdjacentShelf(1));
+    el.sidePrevShelfBtn.addEventListener('click', () => goToAdjacentShelf(-1));
+    el.sideNextShelfBtn.addEventListener('click', () => goToAdjacentShelf(1));
     el.pasteAllBtn.addEventListener('click', pasteAllClipboard);
     el.saveNowBtn.addEventListener('click', () => {
       persist();
