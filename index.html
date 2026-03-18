@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Magazzino Mobile Offline</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --panel-2: #1d2230;
+      --text: #f1f5f9;
+      --muted: #9aa4b2;
+      --accent: #58a6ff;
+      --accent-2: #7ee787;
+      --danger: #ff7b72;
+      --warning: #f2cc60;
+      --border: #2a3140;
+      --shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --font: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100%;
+    }
+
+    body {
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    }
+
+    .app {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 14px 14px 100px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: linear-gradient(180deg, rgba(15,17,21,0.98), rgba(15,17,21,0.90));
+      backdrop-filter: blur(10px);
+      padding: 10px 0 12px;
+      margin-bottom: 12px;
+    }
+
+    h1, h2, h3, h4, p { margin: 0; }
+    h1 { font-size: 1.35rem; }
+    h2 { font-size: 1.1rem; }
+    h3 { font-size: 1rem; }
+
+    .muted { color: var(--muted); }
+    .tiny { font-size: 0.8rem; }
+    .small { font-size: 0.92rem; }
+    .hidden { display: none !important; }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .space-between {
+      justify-content: space-between;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .panel + .panel { margin-top: 12px; }
+
+    .btn, .icon-btn, .select, .input, .textarea {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 14px;
+      font: inherit;
+    }
+
+    .btn, .icon-btn {
+      padding: 11px 14px;
+      cursor: pointer;
+      transition: 0.18s ease;
+      min-height: 44px;
+    }
+
+    .btn:hover, .icon-btn:hover { transform: translateY(-1px); }
+    .btn:active, .icon-btn:active { transform: translateY(0); }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #08121f;
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    .btn.success {
+      background: var(--accent-2);
+      color: #0b1a0e;
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    .btn.danger {
+      background: rgba(255,123,114,0.14);
+      color: var(--danger);
+      border-color: rgba(255,123,114,0.25);
+    }
+
+    .btn.warning {
+      background: rgba(242,204,96,0.14);
+      color: var(--warning);
+      border-color: rgba(242,204,96,0.25);
+    }
+
+    .btn.ghost, .icon-btn {
+      background: var(--panel-2);
+    }
+
+    .btn.compact, .icon-btn.compact {
+      padding: 8px 10px;
+      min-height: 38px;
+      border-radius: 12px;
+      font-size: 0.92rem;
+    }
+
+    .input, .select, .textarea {
+      width: 100%;
+      padding: 12px 13px;
+      min-height: 46px;
+      outline: none;
+    }
+
+    .textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .header-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .stat {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .stat .n {
+      font-weight: 800;
+      font-size: 1.15rem;
+      margin-top: 4px;
+    }
+
+    .origin-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .origin-card {
+      background: linear-gradient(180deg, #1d2432, #171a21);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .origin-card .count {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .shelf-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .shelf-card {
+      background: linear-gradient(180deg, #20283a, #171b24);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 14px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .shelf-card.dragging {
+      opacity: 0.35;
+    }
+
+    .shelf-card.drop-target {
+      outline: 2px dashed var(--accent);
+      outline-offset: -4px;
+    }
+
+    .shelf-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .shelf-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .product-card {
+      background: linear-gradient(180deg, #1c2130, #151922);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .product-top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .product-title {
+      font-size: 1rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .ripiano-badge {
+      min-width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(88,166,255,0.14);
+      color: var(--accent);
+      border: 1px solid rgba(88,166,255,0.26);
+      font-weight: 800;
+    }
+
+    .product-summary {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: #111521;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .product-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .product-edit {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .product-edit .full {
+      grid-column: 1 / -1;
+    }
+
+    .bottom-sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(15,17,21,0.10), rgba(15,17,21,0.95) 25%, rgba(15,17,21,1));
+      backdrop-filter: blur(12px);
+    }
+
+    .clipboard {
+      max-width: 760px;
+      margin: 0 auto;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: #11151d;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .clipboard-head {
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .clipboard-body {
+      max-height: 180px;
+      overflow: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .clipboard-item {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .empty {
+      padding: 16px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 90;
+      display: grid;
+      place-items: center;
+      padding: 14px;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 560px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      max-height: 90vh;
+      overflow: auto;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .modal-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .note {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(88,166,255,0.08);
+      border: 1px solid rgba(88,166,255,0.18);
+      color: #cfe6ff;
+    }
+
+    .danger-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,123,114,0.08);
+      border: 1px solid rgba(255,123,114,0.18);
+      color: #ffd0cc;
+    }
+
+    @media (max-width: 520px) {
+      .origin-grid,
+      .shelf-grid,
+      .stats,
+      .product-edit,
+      .modal-grid,
+      .header-actions,
+      .shelf-actions,
+      .product-actions {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .product-actions .btn,
+      .shelf-actions .btn,
+      .header-actions .btn {
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="row space-between">
+        <div>
+          <h1 id="pageTitle">Magazzino Mobile Offline</h1>
+          <p class="muted small" id="pageSubtitle">Importa un CSV, lavora in locale, esporta il file aggiornato.</p>
+        </div>
+        <button class="icon-btn compact hidden" id="backBtn">← Indietro</button>
+      </div>
+    </div>
+
+    <section id="screenHome">
+      <div class="panel">
+        <div class="row space-between">
+          <div>
+            <h2>Archivio locale</h2>
+            <p class="muted small">Il file viene caricato e modificato sul dispositivo. Nessun backend richiesto.</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <label class="btn primary" for="csvInput">Importa CSV</label>
+          <input id="csvInput" type="file" accept=".csv,text/csv" class="hidden" />
+          <button class="btn success" id="exportBtn">Esporta CSV</button>
+          <button class="btn ghost" id="resetBtn">Svuota archivio</button>
+          <button class="btn ghost" id="downloadSampleBtn">CSV esempio</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="muted tiny">Origini</div>
+            <div class="n" id="statOrigins">0</div>
+          </div>
+          <div class="stat">
+            <div class="muted tiny">Scaffali</div>
+            <div class="n" id="statShelves">0</div>
+          </div>
+          <div class="stat">
+            <div class="muted tiny">Prodotti</div>
+            <div class="n" id="statProducts">0</div>
+          </div>
+        </div>
+
+        <div class="note">
+          Formati posizione supportati:
+          <br />• <strong>b2</strong> → scaffale <strong>b</strong>, ripiano <strong>2</strong>
+          <br />• <strong>2f3</strong> → fila <strong>2</strong>, scaffale <strong>f</strong>, ripiano <strong>3</strong>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Origini</h2>
+        <p class="muted small" style="margin-top: 4px;">Seleziona un'origine per vedere e riorganizzare i suoi scaffali.</p>
+        <div id="originGrid" class="origin-grid"></div>
+      </div>
+    </section>
+
+    <section id="screenOrigin" class="hidden">
+      <div class="panel">
+        <div class="row space-between">
+          <div>
+            <h2 id="originTitle">Origine</h2>
+            <p class="muted small" id="originMeta"></p>
+          </div>
+          <button class="btn compact ghost" id="toggleReorderBtn">Modalità riordino: OFF</button>
+        </div>
+
+        <div class="toolbar">
+          <input id="shelfSearchInput" class="input" placeholder="Cerca scaffale (es. 2f, b, g)" />
+          <button class="btn compact" id="addShelfBtn">+ Scaffale</button>
+          <button class="btn compact" id="renameShelfBtn">Rinomina</button>
+        </div>
+
+        <div class="note" id="reorderNote" style="display:none;">
+          In modalità riordino puoi trascinare uno scaffale tra gli altri. La rinomina avviene a catena solo nell'origine corrente e, per i formati con fila, solo sulla stessa fila.
+        </div>
+
+        <div id="shelfGrid" class="shelf-grid"></div>
+      </div>
+    </section>
+
+    <section id="screenShelf" class="hidden">
+      <div class="panel">
+        <div class="row space-between">
+          <div>
+            <h2 id="shelfTitle">Scaffale</h2>
+            <p class="muted small" id="shelfMeta"></p>
+          </div>
+          <div class="row" style="margin-left:auto;">
+            <button class="btn compact ghost" id="prevShelfBtn">← Prec.</button>
+            <button class="btn compact ghost" id="nextShelfBtn">Succ. →</button>
+            <button class="btn compact primary" id="addProductBtn">+ Prodotto</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <input id="productSearchInput" class="input" placeholder="Cerca prodotto, codice o ripiano" />
+          <button class="btn compact ghost" id="pasteAllBtn">Incolla tagliati</button>
+          <button class="btn compact ghost" id="saveNowBtn">Salva locale</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Prodotti nello scaffale</h3>
+        <p class="muted small" style="margin-top: 4px;">I prodotti sono visibili subito. Il ripiano si cambia direttamente su ogni scheda.</p>
+        <div id="productList" class="product-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="bottom-sheet">
+    <div class="clipboard">
+      <div class="clipboard-head">
+        <div>
+          <strong>Tagliati / copiati</strong>
+          <div class="tiny muted">Puoi incollarli nello scaffale aperto oppure lasciarli in memoria sul dispositivo.</div>
+        </div>
+        <button class="btn compact danger" id="clearClipboardBtn">Svuota</button>
+      </div>
+      <div class="clipboard-body" id="clipboardBody"></div>
+    </div>
+  </div>
+
+  <div id="modalRoot" class="hidden"></div>
+
+  <script>
+    const STORAGE_KEY = 'magazzino_mobile_offline_v1';
+
+    const state = {
+      records: [],
+      clipboard: [],
+      currentScreen: 'home',
+      selectedOrigin: null,
+      selectedShelfKey: null,
+      reorderMode: false,
+      dragShelfKey: null,
+      filters: {
+        shelfSearch: '',
+        productSearch: ''
+      },
+      history: []
+    };
+
+    const el = {
+      pageTitle: document.getElementById('pageTitle'),
+      pageSubtitle: document.getElementById('pageSubtitle'),
+      backBtn: document.getElementById('backBtn'),
+      screenHome: document.getElementById('screenHome'),
+      screenOrigin: document.getElementById('screenOrigin'),
+      screenShelf: document.getElementById('screenShelf'),
+      csvInput: document.getElementById('csvInput'),
+      exportBtn: document.getElementById('exportBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      downloadSampleBtn: document.getElementById('downloadSampleBtn'),
+      statOrigins: document.getElementById('statOrigins'),
+      statShelves: document.getElementById('statShelves'),
+      statProducts: document.getElementById('statProducts'),
+      originGrid: document.getElementById('originGrid'),
+      originTitle: document.getElementById('originTitle'),
+      originMeta: document.getElementById('originMeta'),
+      shelfSearchInput: document.getElementById('shelfSearchInput'),
+      addShelfBtn: document.getElementById('addShelfBtn'),
+      renameShelfBtn: document.getElementById('renameShelfBtn'),
+      shelfGrid: document.getElementById('shelfGrid'),
+      toggleReorderBtn: document.getElementById('toggleReorderBtn'),
+      reorderNote: document.getElementById('reorderNote'),
+      shelfTitle: document.getElementById('shelfTitle'),
+      shelfMeta: document.getElementById('shelfMeta'),
+      productSearchInput: document.getElementById('productSearchInput'),
+      productList: document.getElementById('productList'),
+      addProductBtn: document.getElementById('addProductBtn'),
+      pasteAllBtn: document.getElementById('pasteAllBtn'),
+      saveNowBtn: document.getElementById('saveNowBtn'),
+      prevShelfBtn: document.getElementById('prevShelfBtn'),
+      nextShelfBtn: document.getElementById('nextShelfBtn'),
+      clipboardBody: document.getElementById('clipboardBody'),
+      clearClipboardBtn: document.getElementById('clearClipboardBtn'),
+      modalRoot: document.getElementById('modalRoot')
+    };
+
+    function uid() {
+      return 'r_' + Math.random().toString(36).slice(2, 11) + Date.now().toString(36);
+    }
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function pushHistory() {
+      state.history.push({ records: clone(state.records), clipboard: clone(state.clipboard) });
+      if (state.history.length > 30) state.history.shift();
+    }
+
+    function undoLastAction() {
+      const last = state.history.pop();
+      if (!last) {
+        alert('Nessuna operazione da annullare.');
+        return;
+      }
+      state.records = last.records;
+      state.clipboard = last.clipboard;
+      persist();
+      render();
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        records: state.records,
+        clipboard: state.clipboard
+      }));
+      renderStats();
+    }
+
+    function restore() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        state.records = Array.isArray(parsed.records) ? parsed.records.map(normalizeRecord) : [];
+        state.clipboard = Array.isArray(parsed.clipboard) ? parsed.clipboard : [];
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function normalizeText(v) {
+      return String(v ?? '').trim();
+    }
+
+    function normalizeOrigin(v) {
+      return normalizeText(v || 'senza_origine');
+    }
+
+    function normalizeRecord(record) {
+      const normalized = {
+        _id: record._id || uid(),
+        codice: normalizeText(record.codice),
+        nome: normalizeText(record.nome),
+        lunghezza: normalizeText(record.lunghezza),
+        larghezza: normalizeText(record.larghezza),
+        spessore: normalizeText(record.spessore),
+        posizione: normalizeText(record.posizione).toLowerCase(),
+        quantita_pz: normalizeText(record.quantita_pz),
+        origine: normalizeOrigin(record.origine),
+        created_at: normalizeText(record.created_at),
+        updated_at: normalizeText(record.updated_at)
+      };
+
+      const parsed = parsePosition(normalized.posizione);
+      normalized._parsed = parsed;
+      return normalized;
+    }
+
+    function parsePosition(position) {
+      const value = normalizeText(position).toLowerCase();
+      if (!value) {
+        return {
+          raw: '',
+          type: 'unknown',
+          row: '',
+          shelfLetter: '',
+          shelfKey: '',
+          shelfLabel: 'senza posizione',
+          level: '',
+          sortRow: Number.MAX_SAFE_INTEGER,
+          sortShelf: Number.MAX_SAFE_INTEGER,
+          sortLevel: Number.MAX_SAFE_INTEGER
+        };
+      }
+
+      const rowShelfLevel = value.match(/^(\d+)([a-z])(\d+)$/i);
+      if (rowShelfLevel) {
+        const row = rowShelfLevel[1];
+        const shelfLetter = rowShelfLevel[2].toLowerCase();
+        const level = rowShelfLevel[3];
+        return {
+          raw: value,
+          type: 'row_shelf_level',
+          row,
+          shelfLetter,
+          shelfKey: `${row}${shelfLetter}`,
+          shelfLabel: `${row}${shelfLetter}`,
+          level,
+          sortRow: Number(row),
+          sortShelf: letterToIndex(shelfLetter),
+          sortLevel: Number(level)
+        };
+      }
+
+      const shelfLevel = value.match(/^([a-z])(\d+)$/i);
+      if (shelfLevel) {
+        const shelfLetter = shelfLevel[1].toLowerCase();
+        const level = shelfLevel[2];
+        return {
+          raw: value,
+          type: 'shelf_level',
+          row: '',
+          shelfLetter,
+          shelfKey: shelfLetter,
+          shelfLabel: shelfLetter,
+          level,
+          sortRow: 0,
+          sortShelf: letterToIndex(shelfLetter),
+          sortLevel: Number(level)
+        };
+      }
+
+      return {
+        raw: value,
+        type: 'unknown',
+        row: '',
+        shelfLetter: value,
+        shelfKey: value,
+        shelfLabel: value,
+        level: '',
+        sortRow: Number.MAX_SAFE_INTEGER,
+        sortShelf: Number.MAX_SAFE_INTEGER,
+        sortLevel: Number.MAX_SAFE_INTEGER
+      };
+    }
+
+    function buildPosition(parsed, level) {
+      const safeLevel = normalizeText(level);
+      if (parsed.type === 'row_shelf_level') return `${parsed.row}${parsed.shelfLetter}${safeLevel}`.toLowerCase();
+      if (parsed.type === 'shelf_level') return `${parsed.shelfLetter}${safeLevel}`.toLowerCase();
+      return safeLevel ? `${parsed.shelfKey}${safeLevel}`.toLowerCase() : parsed.shelfKey;
+    }
+
+    function letterToIndex(letter) {
+      if (!letter) return 999;
+      return letter.toLowerCase().charCodeAt(0) - 97;
+    }
+
+    function indexToLetter(index) {
+      const n = Math.max(0, Number(index) || 0);
+      return String.fromCharCode(97 + n);
+    }
+
+    function formatPosition(raw) {
+      return normalizeText(raw).toLowerCase();
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function nowIso() {
+      return new Date().toISOString();
+    }
+
+    function ensureTimestamp(record, isNew = false) {
+      if (isNew && !record.created_at) record.created_at = nowIso();
+      record.updated_at = nowIso();
+      return record;
+    }
+
+    function getOrigins() {
+      const map = new Map();
+      state.records.forEach(record => {
+        const origin = normalizeOrigin(record.origine);
+        if (!map.has(origin)) map.set(origin, { name: origin, count: 0 });
+        map.get(origin).count += 1;
+      });
+      return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'it'));
+    }
+
+    function getRecordsByOrigin(origin) {
+      return state.records.filter(r => normalizeOrigin(r.origine) === origin);
+    }
+
+    function getShelvesForOrigin(origin) {
+      const records = getRecordsByOrigin(origin);
+      const map = new Map();
+      records.forEach(record => {
+        const p = record._parsed || parsePosition(record.posizione);
+        const key = p.shelfKey || 'senza_posizione';
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            label: p.shelfLabel || key,
+            row: p.row || '',
+            shelfLetter: p.shelfLetter || '',
+            type: p.type,
+            products: 0,
+            levels: new Set(),
+            parsed: p
+          });
+        }
+        const shelf = map.get(key);
+        shelf.products += 1;
+        if (p.level) shelf.levels.add(String(p.level));
+      });
+
+      return [...map.values()].sort((a, b) => {
+        if (a.parsed.sortRow !== b.parsed.sortRow) return a.parsed.sortRow - b.parsed.sortRow;
+        return a.parsed.sortShelf - b.parsed.sortShelf;
+      });
+    }
+
+    function getCurrentShelfRecords() {
+      if (!state.selectedOrigin || !state.selectedShelfKey) return [];
+      return state.records.filter(record => normalizeOrigin(record.origine) === state.selectedOrigin && (record._parsed?.shelfKey === state.selectedShelfKey));
+    }
+
+    function getOrderedShelvesForCurrentOrigin() {
+      if (!state.selectedOrigin) return [];
+      return getShelvesForOrigin(state.selectedOrigin);
+    }
+
+    function goToAdjacentShelf(direction) {
+      const shelves = getOrderedShelvesForCurrentOrigin();
+      if (!shelves.length || !state.selectedShelfKey) return;
+      const currentIndex = shelves.findIndex(s => s.key === state.selectedShelfKey);
+      if (currentIndex === -1) return;
+      const nextIndex = currentIndex + direction;
+      if (nextIndex < 0 || nextIndex >= shelves.length) return;
+      state.selectedShelfKey = shelves[nextIndex].key;
+      state.filters.productSearch = '';
+      if (el.productSearchInput) el.productSearchInput.value = '';
+      render();
+    }
+
+    function renderStats() {
+      const origins = getOrigins();
+      const shelves = new Set(state.records.map(r => `${normalizeOrigin(r.origine)}__${r._parsed?.shelfKey || ''}`));
+      el.statOrigins.textContent = origins.length;
+      el.statShelves.textContent = state.records.length ? shelves.size : 0;
+      el.statProducts.textContent = state.records.length;
+    }
+
+    function render() {
+      renderStats();
+      renderHome();
+      renderOrigin();
+      renderShelf();
+      renderClipboard();
+      updateLayout();
+    }
+
+    function updateLayout() {
+      el.screenHome.classList.toggle('hidden', state.currentScreen !== 'home');
+      el.screenOrigin.classList.toggle('hidden', state.currentScreen !== 'origin');
+      el.screenShelf.classList.toggle('hidden', state.currentScreen !== 'shelf');
+      el.backBtn.classList.toggle('hidden', state.currentScreen === 'home');
+
+      if (state.currentScreen === 'home') {
+        el.pageTitle.textContent = 'Magazzino Mobile Offline';
+        el.pageSubtitle.textContent = 'Importa un CSV, lavora in locale, esporta il file aggiornato.';
+      } else if (state.currentScreen === 'origin') {
+        el.pageTitle.textContent = 'Scaffali';
+        el.pageSubtitle.textContent = state.selectedOrigin || '';
+      } else {
+        el.pageTitle.textContent = 'Contenuto scaffale';
+        el.pageSubtitle.textContent = `${state.selectedOrigin || ''} · ${state.selectedShelfKey || ''}`;
+      }
+    }
+
+    function renderHome() {
+      const origins = getOrigins();
+      if (!origins.length) {
+        el.originGrid.innerHTML = '<div class="empty" style="grid-column: 1 / -1;">Nessun dato caricato. Importa un CSV per iniziare.</div>';
+        return;
+      }
+
+      el.originGrid.innerHTML = origins.map(origin => `
+        <button class="origin-card" data-origin="${escapeHtml(origin.name)}">
+          <div><strong>${escapeHtml(origin.name)}</strong></div>
+          <div class="count">${origin.count} prodotti</div>
+        </button>
+      `).join('');
+
+      el.originGrid.querySelectorAll('[data-origin]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedOrigin = btn.dataset.origin;
+          state.currentScreen = 'origin';
+          state.selectedShelfKey = null;
+          state.filters.shelfSearch = '';
+          el.shelfSearchInput.value = '';
+          render();
+        });
+      });
+    }
+
+    function renderOrigin() {
+      if (!state.selectedOrigin) return;
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const search = state.filters.shelfSearch.trim().toLowerCase();
+      const filtered = search ? shelves.filter(s => s.label.toLowerCase().includes(search)) : shelves;
+
+      el.originTitle.textContent = state.selectedOrigin;
+      el.originMeta.textContent = `${shelves.length} scaffali · ${getRecordsByOrigin(state.selectedOrigin).length} prodotti`;
+      el.toggleReorderBtn.textContent = `Modalità riordino: ${state.reorderMode ? 'ON' : 'OFF'}`;
+      el.reorderNote.style.display = state.reorderMode ? 'block' : 'none';
+
+      if (!filtered.length) {
+        el.shelfGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessuno scaffale trovato.</div>';
+        return;
+      }
+
+      el.shelfGrid.innerHTML = filtered.map(shelf => {
+        const levels = [...shelf.levels].sort((a, b) => Number(a) - Number(b));
+        return `
+          <div
+            class="shelf-card"
+            data-shelf-key="${escapeHtml(shelf.key)}"
+            draggable="${state.reorderMode ? 'true' : 'false'}"
+          >
+            <div>
+              <div class="shelf-title">${escapeHtml(shelf.label)}</div>
+              <div class="chip-row" style="margin-top:8px;">
+                <span class="chip">${shelf.products} prodotti</span>
+                <span class="chip">Ripiani: ${levels.join(', ') || '-'}</span>
+              </div>
+            </div>
+            <div class="shelf-actions">
+              <button class="btn compact ghost" data-open-shelf="${escapeHtml(shelf.key)}">Apri</button>
+              <button class="btn compact warning" data-prompt-rename-shelf="${escapeHtml(shelf.key)}">Rinomina</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      el.shelfGrid.querySelectorAll('[data-open-shelf]').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.stopPropagation();
+          openShelf(btn.dataset.openShelf);
+        });
+      });
+
+      el.shelfGrid.querySelectorAll('[data-prompt-rename-shelf]').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.stopPropagation();
+          promptRenameShelf(btn.dataset.promptRenameShelf);
+        });
+      });
+
+      el.shelfGrid.querySelectorAll('.shelf-card').forEach(card => {
+        const key = card.dataset.shelfKey;
+        card.addEventListener('click', event => {
+          if (event.target.closest('button')) return;
+          openShelf(key);
+        });
+
+        if (state.reorderMode) {
+          card.addEventListener('dragstart', () => {
+            state.dragShelfKey = key;
+            card.classList.add('dragging');
+          });
+          card.addEventListener('dragend', () => {
+            state.dragShelfKey = null;
+            card.classList.remove('dragging');
+            document.querySelectorAll('.drop-target').forEach(node => node.classList.remove('drop-target'));
+          });
+          card.addEventListener('dragover', event => {
+            event.preventDefault();
+            if (state.dragShelfKey && state.dragShelfKey !== key) card.classList.add('drop-target');
+          });
+          card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
+          card.addEventListener('drop', event => {
+            event.preventDefault();
+            card.classList.remove('drop-target');
+            if (state.dragShelfKey && state.dragShelfKey !== key) {
+              reorderShelves(state.dragShelfKey, key);
+            }
+          });
+        }
+      });
+    }
+
+    function openShelf(shelfKey) {
+      state.selectedShelfKey = shelfKey;
+      state.currentScreen = 'shelf';
+      state.filters.productSearch = '';
+      el.productSearchInput.value = '';
+      render();
+    }
+
+    function renderShelf() {
+      if (!state.selectedOrigin || !state.selectedShelfKey) return;
+      const records = getCurrentShelfRecords();
+      const filtered = state.filters.productSearch.trim().toLowerCase()
+        ? records.filter(record => productMatches(record, state.filters.productSearch.trim().toLowerCase()))
+        : records;
+      const orderedShelves = getOrderedShelvesForCurrentOrigin();
+      const shelfIndex = orderedShelves.findIndex(s => s.key === state.selectedShelfKey);
+      const shelfData = orderedShelves.find(s => s.key === state.selectedShelfKey);
+      const label = shelfData?.label || state.selectedShelfKey;
+
+      el.shelfTitle.textContent = `Scaffale ${label}`;
+      el.shelfMeta.textContent = `${state.selectedOrigin} · ${records.length} prodotti${shelfIndex >= 0 ? ` · ${shelfIndex + 1}/${orderedShelves.length}` : ''}`;
+      el.prevShelfBtn.disabled = shelfIndex <= 0;
+      el.nextShelfBtn.disabled = shelfIndex === -1 || shelfIndex >= orderedShelves.length - 1;
+
+      if (!filtered.length) {
+        el.productList.innerHTML = '<div class="empty">Nessun prodotto in questo scaffale.</div>';
+        return;
+      }
+
+      const sorted = [...filtered].sort((a, b) => {
+        const pa = a._parsed || parsePosition(a.posizione);
+        const pb = b._parsed || parsePosition(b.posizione);
+        if (pa.sortLevel !== pb.sortLevel) return pa.sortLevel - pb.sortLevel;
+        return (a.nome || '').localeCompare(b.nome || '', 'it');
+      });
+
+      el.productList.innerHTML = sorted.map(record => renderProductCard(record)).join('');
+      attachProductEvents();
+    }
+
+    function productMatches(record, query) {
+      const fields = [
+        record.codice,
+        record.nome,
+        record.lunghezza,
+        record.larghezza,
+        record.spessore,
+        record.quantita_pz,
+        record.posizione,
+        record._parsed?.level,
+        record.origine
+      ].join(' ').toLowerCase();
+      return fields.includes(query);
+    }
+
+    function renderProductCard(record) {
+      const p = record._parsed || parsePosition(record.posizione);
+      const title = record.nome || '(senza nome)';
+      const dims = [record.lunghezza, record.larghezza, record.spessore].filter(Boolean).join(' × ');
+      const qty = record.quantita_pz || '-';
+      return `
+        <div class="product-card" data-product-id="${escapeHtml(record._id)}">
+          <div class="product-top">
+            <div>
+              <div class="product-title">${escapeHtml(title)}</div>
+              <div class="product-summary" style="margin-top:8px;">
+                <span class="pill">Codice: ${escapeHtml(record.codice || '-')}</span>
+                <span class="pill">Posizione: ${escapeHtml(record.posizione || '-')}</span>
+                <span class="pill">Q.tà: ${escapeHtml(qty)}</span>
+                <span class="pill">Misure: ${escapeHtml(dims || '-')}</span>
+              </div>
+            </div>
+            <div class="ripiano-badge" title="Ripiano">${escapeHtml(p.level || '?')}</div>
+          </div>
+
+          <div class="product-edit">
+            <input class="input full" data-field="nome" value="${escapeHtml(record.nome)}" placeholder="Nome prodotto" />
+            <input class="input" data-field="lunghezza" value="${escapeHtml(record.lunghezza)}" placeholder="Lunghezza" />
+            <input class="input" data-field="larghezza" value="${escapeHtml(record.larghezza)}" placeholder="Larghezza" />
+            <input class="input" data-field="spessore" value="${escapeHtml(record.spessore)}" placeholder="Spessore" />
+            <input class="input" data-field="quantita_pz" value="${escapeHtml(record.quantita_pz)}" placeholder="Quantità" />
+            <input class="input" data-field="codice" value="${escapeHtml(record.codice)}" placeholder="Codice" />
+            <input class="input" data-field="ripiano" value="${escapeHtml(p.level)}" placeholder="Ripiano" />
+            <input class="input full" data-field="posizione" value="${escapeHtml(record.posizione)}" placeholder="Posizione completa" />
+          </div>
+
+          <div class="product-actions">
+            <button class="btn compact primary" data-save-product="${escapeHtml(record._id)}">Salva</button>
+            <button class="btn compact" data-cut-product="${escapeHtml(record._id)}">Taglia</button>
+            <button class="btn compact warning" data-copy-product="${escapeHtml(record._id)}">Copia</button>
+            <button class="btn compact danger" data-delete-product="${escapeHtml(record._id)}">Elimina</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachProductEvents() {
+      el.productList.querySelectorAll('[data-save-product]').forEach(btn => {
+        btn.addEventListener('click', () => saveProductInline(btn.dataset.saveProduct));
+      });
+      el.productList.querySelectorAll('[data-cut-product]').forEach(btn => {
+        btn.addEventListener('click', () => cutProduct(btn.dataset.cutProduct));
+      });
+      el.productList.querySelectorAll('[data-copy-product]').forEach(btn => {
+        btn.addEventListener('click', () => copyProduct(btn.dataset.copyProduct));
+      });
+      el.productList.querySelectorAll('[data-delete-product]').forEach(btn => {
+        btn.addEventListener('click', () => deleteProduct(btn.dataset.deleteProduct));
+      });
+    }
+
+    function saveProductInline(productId) {
+      const card = el.productList.querySelector(`[data-product-id="${CSS.escape(productId)}"]`);
+      const record = state.records.find(r => r._id === productId);
+      if (!card || !record) return;
+
+      pushHistory();
+
+      const updates = {};
+      card.querySelectorAll('[data-field]').forEach(input => {
+        updates[input.dataset.field] = normalizeText(input.value);
+      });
+
+      record.nome = updates.nome;
+      record.lunghezza = updates.lunghezza;
+      record.larghezza = updates.larghezza;
+      record.spessore = updates.spessore;
+      record.quantita_pz = updates.quantita_pz;
+      record.codice = updates.codice;
+
+      const oldParsed = record._parsed || parsePosition(record.posizione);
+      if (updates.posizione) {
+        record.posizione = formatPosition(updates.posizione);
+      } else {
+        const ripiano = updates.ripiano || oldParsed.level || '1';
+        record.posizione = buildPosition(oldParsed, ripiano);
+      }
+
+      record._parsed = parsePosition(record.posizione);
+      ensureTimestamp(record);
+
+      // Se cambiando posizione esce dallo scaffale aperto, rendi coerente la vista.
+      persist();
+      render();
+    }
+
+    function copyProduct(productId) {
+      const record = state.records.find(r => r._id === productId);
+      if (!record) return;
+      pushHistory();
+      state.clipboard.unshift({
+        mode: 'copy',
+        record: clone(record),
+        sourceOrigin: record.origine,
+        sourcePosition: record.posizione,
+        copiedAt: nowIso()
+      });
+      if (state.clipboard.length > 20) state.clipboard.pop();
+      persist();
+      renderClipboard();
+    }
+
+    function cutProduct(productId) {
+      const index = state.records.findIndex(r => r._id === productId);
+      if (index === -1) return;
+      pushHistory();
+      const [record] = state.records.splice(index, 1);
+      state.clipboard.unshift({
+        mode: 'cut',
+        record: clone(record),
+        sourceOrigin: record.origine,
+        sourcePosition: record.posizione,
+        copiedAt: nowIso()
+      });
+      if (state.clipboard.length > 20) state.clipboard.pop();
+      persist();
+      render();
+    }
+
+    function deleteProduct(productId) {
+      if (!confirm('Eliminare questo prodotto?')) return;
+      pushHistory();
+      state.records = state.records.filter(r => r._id !== productId);
+      persist();
+      render();
+    }
+
+    function pasteClipboardItem(index) {
+      if (!state.selectedOrigin || !state.selectedShelfKey) {
+        alert('Apri prima uno scaffale.');
+        return;
+      }
+      const item = state.clipboard[index];
+      if (!item) return;
+      pushHistory();
+
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const currentShelf = shelves.find(s => s.key === state.selectedShelfKey);
+      const parsed = currentShelf?.parsed || parsePosition(state.selectedShelfKey + '1');
+      const originalParsed = item.record._parsed || parsePosition(item.record.posizione);
+      const level = originalParsed.level || '1';
+
+      const newRecord = normalizeRecord({
+        ...clone(item.record),
+        _id: uid(),
+        origine: state.selectedOrigin,
+        posizione: buildPosition({ ...parsed, level }, level)
+      });
+      ensureTimestamp(newRecord, true);
+      state.records.push(newRecord);
+
+      if (item.mode === 'cut') {
+        state.clipboard.splice(index, 1);
+      }
+
+      persist();
+      render();
+    }
+
+    function pasteAllClipboard() {
+      if (!state.clipboard.length) {
+        alert('Nessun prodotto in memoria.');
+        return;
+      }
+      const indexes = state.clipboard.map((_, i) => i);
+      indexes.forEach((_, i) => {
+        if (state.clipboard[0]) pasteClipboardItem(0);
+      });
+    }
+
+    function renderClipboard() {
+      if (!state.clipboard.length) {
+        el.clipboardBody.innerHTML = '<div class="empty">Nessun prodotto tagliato o copiato.</div>';
+        return;
+      }
+      el.clipboardBody.innerHTML = state.clipboard.map((item, index) => `
+        <div class="clipboard-item">
+          <div>
+            <div><strong>${escapeHtml(item.record.nome || '(senza nome)')}</strong></div>
+            <div class="tiny muted">${escapeHtml(item.mode.toUpperCase())} · da ${escapeHtml(item.sourceOrigin || '-')} · ${escapeHtml(item.sourcePosition || '-')}</div>
+          </div>
+          <button class="btn compact primary" data-paste-index="${index}">Incolla</button>
+          <button class="btn compact ghost" data-remove-clip-index="${index}">×</button>
+        </div>
+      `).join('');
+
+      el.clipboardBody.querySelectorAll('[data-paste-index]').forEach(btn => {
+        btn.addEventListener('click', () => pasteClipboardItem(Number(btn.dataset.pasteIndex)));
+      });
+      el.clipboardBody.querySelectorAll('[data-remove-clip-index]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          pushHistory();
+          state.clipboard.splice(Number(btn.dataset.removeClipIndex), 1);
+          persist();
+          renderClipboard();
+        });
+      });
+    }
+
+    function reorderShelves(sourceKey, targetKey) {
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const sourceShelf = shelves.find(s => s.key === sourceKey);
+      const targetShelf = shelves.find(s => s.key === targetKey);
+      if (!sourceShelf || !targetShelf) return;
+
+      if (sourceShelf.parsed.type !== targetShelf.parsed.type) {
+        alert('Non posso riordinare scaffali con formati diversi.');
+        return;
+      }
+
+      if (sourceShelf.parsed.type === 'row_shelf_level' && sourceShelf.row !== targetShelf.row) {
+        alert('Per sicurezza, il riordino a catena è limitato alla stessa fila.');
+        return;
+      }
+
+      const sameGroupShelves = shelves.filter(s => {
+        if (sourceShelf.parsed.type === 'row_shelf_level') return s.row === sourceShelf.row && s.parsed.type === sourceShelf.parsed.type;
+        return s.parsed.type === sourceShelf.parsed.type;
+      }).sort((a, b) => a.parsed.sortShelf - b.parsed.sortShelf);
+
+      const orderedKeys = sameGroupShelves.map(s => s.key);
+      const fromIndex = orderedKeys.indexOf(sourceKey);
+      const toIndex = orderedKeys.indexOf(targetKey);
+      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+      pushHistory();
+
+      orderedKeys.splice(toIndex, 0, orderedKeys.splice(fromIndex, 1)[0]);
+      const renameMap = new Map();
+
+      orderedKeys.forEach((oldKey, index) => {
+        const newLetter = indexToLetter(index);
+        const oldShelf = sameGroupShelves.find(s => s.key === oldKey);
+        const newShelfKey = sourceShelf.parsed.type === 'row_shelf_level'
+          ? `${oldShelf.row}${newLetter}`
+          : newLetter;
+        renameMap.set(oldKey, {
+          oldKey,
+          newShelfKey,
+          newLetter,
+          row: oldShelf.row,
+          type: oldShelf.parsed.type
+        });
+      });
+
+      state.records.forEach(record => {
+        if (normalizeOrigin(record.origine) !== state.selectedOrigin) return;
+        const parsed = record._parsed || parsePosition(record.posizione);
+        const mapping = renameMap.get(parsed.shelfKey);
+        if (!mapping) return;
+
+        const tempParsed = { ...parsed, shelfLetter: mapping.newLetter };
+        record.posizione = buildPosition(tempParsed, parsed.level || '1');
+        record._parsed = parsePosition(record.posizione);
+        ensureTimestamp(record);
+      });
+
+      if (state.selectedShelfKey && renameMap.has(state.selectedShelfKey)) {
+        state.selectedShelfKey = renameMap.get(state.selectedShelfKey).newShelfKey;
+      }
+
+      persist();
+      render();
+    }
+
+    function promptRenameShelf(prefilledShelfKey = '') {
+      if (!state.selectedOrigin) return;
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const current = prefilledShelfKey || state.selectedShelfKey || '';
+      const options = shelves.map(s => `<option value="${escapeHtml(s.key)}">${escapeHtml(s.label)}</option>`).join('');
+
+      openModal(`
+        <h3>Rinomina scaffale</h3>
+        <p class="muted small" style="margin-top:4px;">Aggiorna tutte le posizioni dei prodotti nello scaffale scelto, mantenendo il ripiano invariato.</p>
+        <div class="modal-grid">
+          <div class="full">
+            <label class="tiny muted">Scaffale da rinominare</label>
+            <select id="renameFrom" class="select">${options}</select>
+          </div>
+          <div class="full">
+            <label class="tiny muted">Nuovo nome scaffale</label>
+            <input id="renameTo" class="input" placeholder="es. 2g oppure c" />
+          </div>
+        </div>
+        <div class="danger-note">Per sicurezza, la rinomina richiede stesso formato dello scaffale attuale. Esempio: 2f → 2g, oppure b → c.</div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmRenameShelfBtn">Conferma</button>
+        </div>
+      `, () => {
+        const fromEl = document.getElementById('renameFrom');
+        const toEl = document.getElementById('renameTo');
+        if (current) fromEl.value = current;
+        const confirmBtn = document.getElementById('confirmRenameShelfBtn');
+        confirmBtn.addEventListener('click', () => {
+          const from = normalizeText(fromEl.value).toLowerCase();
+          const to = normalizeText(toEl.value).toLowerCase();
+          renameShelf(from, to);
+        });
+      });
+    }
+
+    function renameShelf(fromKey, toKey) {
+      if (!fromKey || !toKey) {
+        alert('Inserisci scaffale origine e nuovo nome.');
+        return;
+      }
+      const fromParsed = parseShelfKey(fromKey);
+      const toParsed = parseShelfKey(toKey);
+      if (!fromParsed || !toParsed) {
+        alert('Formato scaffale non valido.');
+        return;
+      }
+      if (fromParsed.type !== toParsed.type) {
+        alert('Il formato del nuovo scaffale deve essere coerente con quello attuale.');
+        return;
+      }
+      if (fromParsed.type === 'row_shelf' && fromParsed.row !== toParsed.row) {
+        alert('Per sicurezza, la rinomina manuale dello scaffale mantiene la stessa fila.');
+        return;
+      }
+
+      pushHistory();
+      let touched = 0;
+      state.records.forEach(record => {
+        if (normalizeOrigin(record.origine) !== state.selectedOrigin) return;
+        const parsed = record._parsed || parsePosition(record.posizione);
+        if (parsed.shelfKey !== fromKey) return;
+        const updatedParsed = {
+          ...parsed,
+          row: toParsed.row,
+          shelfLetter: toParsed.shelfLetter,
+          type: toParsed.type === 'row_shelf' ? 'row_shelf_level' : 'shelf_level',
+          shelfKey: toKey,
+          shelfLabel: toKey
+        };
+        record.posizione = buildPosition(updatedParsed, parsed.level || '1');
+        record._parsed = parsePosition(record.posizione);
+        ensureTimestamp(record);
+        touched += 1;
+      });
+
+      if (!touched) {
+        state.history.pop();
+        alert('Nessun prodotto trovato in quello scaffale.');
+        return;
+      }
+
+      if (state.selectedShelfKey === fromKey) state.selectedShelfKey = toKey;
+      persist();
+      closeModal();
+      render();
+    }
+
+    function parseShelfKey(key) {
+      const value = normalizeText(key).toLowerCase();
+      const rowShelf = value.match(/^(\d+)([a-z])$/i);
+      if (rowShelf) {
+        return { type: 'row_shelf', row: rowShelf[1], shelfLetter: rowShelf[2].toLowerCase(), shelfKey: value };
+      }
+      const shelf = value.match(/^([a-z])$/i);
+      if (shelf) {
+        return { type: 'shelf', row: '', shelfLetter: shelf[1].toLowerCase(), shelfKey: value };
+      }
+      return null;
+    }
+
+    function addShelf() {
+      if (!state.selectedOrigin) return;
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const guessType = shelves[0]?.parsed?.type === 'row_shelf_level' ? 'row_shelf' : 'shelf';
+      let suggested = 'a';
+
+      if (guessType === 'row_shelf') {
+        const rowCounts = new Map();
+        shelves.forEach(s => rowCounts.set(s.row, (rowCounts.get(s.row) || 0) + 1));
+        const targetRow = [...rowCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '1';
+        const sameRow = shelves.filter(s => s.row === targetRow).sort((a, b) => a.parsed.sortShelf - b.parsed.sortShelf);
+        const nextLetter = indexToLetter(sameRow.length);
+        suggested = `${targetRow}${nextLetter}`;
+      } else {
+        suggested = indexToLetter(shelves.length);
+      }
+
+      openModal(`
+        <h3>Aggiungi scaffale</h3>
+        <p class="muted small" style="margin-top:4px;">Viene creato vuoto. Potrai poi spostarlo o aggiungere prodotti.</p>
+        <div class="modal-grid">
+          <div class="full">
+            <label class="tiny muted">Nome scaffale</label>
+            <input id="newShelfKey" class="input" value="${escapeHtml(suggested)}" />
+          </div>
+          <div class="full">
+            <label class="tiny muted">Ripiano iniziale</label>
+            <input id="newShelfLevel" class="input" value="1" />
+          </div>
+        </div>
+        <div class="note">Per creare uno scaffale visibile, aggiungo un prodotto vuoto incompleto che poi potrai modificare o lasciare incompleto.</div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmAddShelfBtn">Crea</button>
+        </div>
+      `, () => {
+        document.getElementById('confirmAddShelfBtn').addEventListener('click', () => {
+          const shelfKey = normalizeText(document.getElementById('newShelfKey').value).toLowerCase();
+          const level = normalizeText(document.getElementById('newShelfLevel').value) || '1';
+          createShelfWithPlaceholder(shelfKey, level);
+        });
+      });
+    }
+
+    function createShelfWithPlaceholder(shelfKey, level) {
+      const parsedShelf = parseShelfKey(shelfKey);
+      if (!parsedShelf) {
+        alert('Formato scaffale non valido.');
+        return;
+      }
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      if (shelves.some(s => s.key === shelfKey)) {
+        alert('Esiste già uno scaffale con questo nome nell\'origine selezionata.');
+        return;
+      }
+
+      pushHistory();
+      const position = parsedShelf.type === 'row_shelf'
+        ? `${parsedShelf.row}${parsedShelf.shelfLetter}${level}`
+        : `${parsedShelf.shelfLetter}${level}`;
+
+      const record = normalizeRecord(ensureTimestamp({
+        _id: uid(),
+        codice: '',
+        nome: '',
+        lunghezza: '',
+        larghezza: '',
+        spessore: '',
+        posizione,
+        quantita_pz: '',
+        origine: state.selectedOrigin,
+        created_at: '',
+        updated_at: ''
+      }, true));
+
+      state.records.push(record);
+      persist();
+      closeModal();
+      render();
+    }
+
+    function addProduct() {
+      if (!state.selectedOrigin || !state.selectedShelfKey) return;
+      const shelf = getShelvesForOrigin(state.selectedOrigin).find(s => s.key === state.selectedShelfKey);
+      const parsed = shelf?.parsed;
+      const nextLevel = suggestNextLevelForCurrentShelf();
+
+      openModal(`
+        <h3>Nuovo prodotto</h3>
+        <p class="muted small" style="margin-top:4px;">Puoi lasciarlo anche incompleto e sistemarlo dopo.</p>
+        <div class="modal-grid">
+          <input id="newNome" class="input full" placeholder="Nome" />
+          <input id="newCodice" class="input full" placeholder="Codice" />
+          <input id="newLunghezza" class="input" placeholder="Lunghezza" />
+          <input id="newLarghezza" class="input" placeholder="Larghezza" />
+          <input id="newSpessore" class="input" placeholder="Spessore" />
+          <input id="newQuantita" class="input" placeholder="Quantità" />
+          <input id="newRipiano" class="input full" value="${escapeHtml(nextLevel)}" placeholder="Ripiano" />
+        </div>
+        <div class="note">Lo scaffale rimane ${escapeHtml(state.selectedShelfKey)}. Cambiare ripiano non sposta gli altri prodotti.</div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmAddProductBtn">Aggiungi</button>
+        </div>
+      `, () => {
+        document.getElementById('confirmAddProductBtn').addEventListener('click', () => {
+          pushHistory();
+          const level = normalizeText(document.getElementById('newRipiano').value) || '1';
+          const position = buildPosition(parsed, level);
+          const record = normalizeRecord(ensureTimestamp({
+            _id: uid(),
+            codice: normalizeText(document.getElementById('newCodice').value),
+            nome: normalizeText(document.getElementById('newNome').value),
+            lunghezza: normalizeText(document.getElementById('newLunghezza').value),
+            larghezza: normalizeText(document.getElementById('newLarghezza').value),
+            spessore: normalizeText(document.getElementById('newSpessore').value),
+            posizione,
+            quantita_pz: normalizeText(document.getElementById('newQuantita').value),
+            origine: state.selectedOrigin,
+            created_at: '',
+            updated_at: ''
+          }, true));
+          state.records.push(record);
+          persist();
+          closeModal();
+          render();
+        });
+      });
+    }
+
+    function suggestNextLevelForCurrentShelf() {
+      const records = getCurrentShelfRecords();
+      const max = records.reduce((acc, record) => {
+        const level = Number(record._parsed?.level || 0);
+        return Math.max(acc, isFinite(level) ? level : 0);
+      }, 0);
+      return String(max || 1);
+    }
+
+    function openModal(content, onReady) {
+      el.modalRoot.classList.remove('hidden');
+      el.modalRoot.innerHTML = `<div class="modal-backdrop"><div class="modal">${content}</div></div>`;
+      el.modalRoot.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeModal));
+      el.modalRoot.querySelector('.modal-backdrop').addEventListener('click', event => {
+        if (event.target.classList.contains('modal-backdrop')) closeModal();
+      });
+      if (typeof onReady === 'function') onReady();
+    }
+
+    function closeModal() {
+      el.modalRoot.classList.add('hidden');
+      el.modalRoot.innerHTML = '';
+    }
+
+    function toCsv(records) {
+      const headers = ['codice', 'nome', 'lunghezza', 'larghezza', 'spessore', 'posizione', 'quantita_pz', 'origine', 'created_at', 'updated_at'];
+      const rows = [headers.join(',')];
+      records.forEach(record => {
+        const row = headers.map(h => csvEscape(record[h] ?? ''));
+        rows.push(row.join(','));
+      });
+      return rows.join('\n');
+    }
+
+    function csvEscape(value) {
+      const s = String(value ?? '');
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let value = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (inQuotes) {
+          if (char === '"' && next === '"') {
+            value += '"';
+            i++;
+          } else if (char === '"') {
+            inQuotes = false;
+          } else {
+            value += char;
+          }
+        } else {
+          if (char === '"') {
+            inQuotes = true;
+          } else if (char === ',') {
+            row.push(value);
+            value = '';
+          } else if (char === '\n') {
+            row.push(value);
+            rows.push(row);
+            row = [];
+            value = '';
+          } else if (char === '\r') {
+          } else {
+            value += char;
+          }
+        }
+      }
+      row.push(value);
+      rows.push(row);
+      if (!rows.length) return [];
+
+      const headers = rows[0].map(h => normalizeText(h));
+      const dataRows = rows.slice(1).filter(r => r.some(cell => normalizeText(cell) !== ''));
+      return dataRows.map(r => {
+        const obj = {};
+        headers.forEach((header, i) => {
+          obj[header] = r[i] ?? '';
+        });
+        return normalizeRecord(obj);
+      });
+    }
+
+    function downloadFile(filename, content, mime = 'text/plain;charset=utf-8') {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadSampleCsv() {
+      const sample = [
+        'codice,nome,lunghezza,larghezza,spessore,posizione,quantita_pz,origine,created_at,updated_at',
+        'BAL001,OSB,2500,1250,18,2f1,12,scaffali,2026-03-18T09:00:00.000Z,2026-03-18T09:00:00.000Z',
+        'BAL002,Listellare,3000,1200,20,2f3,4,scaffali,2026-03-18T09:01:00.000Z,2026-03-18T09:01:00.000Z',
+        'BAL003,MDF,2800,2070,19,b2,7,sezionatrice,2026-03-18T09:02:00.000Z,2026-03-18T09:02:00.000Z'
+      ].join('\n');
+      downloadFile('magazzino_esempio.csv', sample, 'text/csv;charset=utf-8');
+    }
+
+    el.csvInput.addEventListener('change', async event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      try {
+        const imported = parseCsv(text);
+        pushHistory();
+        state.records = imported;
+        state.clipboard = [];
+        state.selectedOrigin = null;
+        state.selectedShelfKey = null;
+        state.currentScreen = 'home';
+        persist();
+        render();
+      } catch (err) {
+        console.error(err);
+        alert('CSV non valido o non leggibile.');
+      } finally {
+        event.target.value = '';
+      }
+    });
+
+    el.exportBtn.addEventListener('click', () => {
+      const csv = toCsv(state.records);
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+      downloadFile(`magazzino_export_${stamp}.csv`, csv, 'text/csv;charset=utf-8');
+    });
+
+    el.resetBtn.addEventListener('click', () => {
+      if (!confirm('Cancellare archivio locale e memoria prodotti tagliati?')) return;
+      pushHistory();
+      state.records = [];
+      state.clipboard = [];
+      state.selectedOrigin = null;
+      state.selectedShelfKey = null;
+      state.currentScreen = 'home';
+      persist();
+      render();
+    });
+
+    el.downloadSampleBtn.addEventListener('click', downloadSampleCsv);
+    el.backBtn.addEventListener('click', () => {
+      if (state.currentScreen === 'shelf') {
+        state.currentScreen = 'origin';
+      } else {
+        state.currentScreen = 'home';
+      }
+      render();
+    });
+    el.shelfSearchInput.addEventListener('input', e => {
+      state.filters.shelfSearch = e.target.value;
+      renderOrigin();
+    });
+    el.productSearchInput.addEventListener('input', e => {
+      state.filters.productSearch = e.target.value;
+      renderShelf();
+    });
+    el.toggleReorderBtn.addEventListener('click', () => {
+      state.reorderMode = !state.reorderMode;
+      renderOrigin();
+    });
+    el.renameShelfBtn.addEventListener('click', () => promptRenameShelf());
+    el.addShelfBtn.addEventListener('click', addShelf);
+    el.addProductBtn.addEventListener('click', addProduct);
+    el.prevShelfBtn.addEventListener('click', () => goToAdjacentShelf(-1));
+    el.nextShelfBtn.addEventListener('click', () => goToAdjacentShelf(1));
+    el.pasteAllBtn.addEventListener('click', pasteAllClipboard);
+    el.saveNowBtn.addEventListener('click', () => {
+      persist();
+      alert('Salvato in locale.');
+    });
+    el.clearClipboardBtn.addEventListener('click', () => {
+      if (!state.clipboard.length) return;
+      pushHistory();
+      state.clipboard = [];
+      persist();
+      renderClipboard();
+    });
+
+    document.addEventListener('keydown', event => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        undoLastAction();
+        return;
+      }
+
+      if (state.currentScreen === 'shelf') {
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          goToAdjacentShelf(-1);
+        } else if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          goToAdjacentShelf(1);
+        }
+      }
+    });
+
+    restore();
+    render();
+  </script>
+</body>
+</html>
