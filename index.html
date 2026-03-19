@@ -655,6 +655,7 @@
 
     const state = {
       records: [],
+      manualShelves: [],
       clipboard: [],
       currentScreen: 'home',
       selectedOrigin: null,
@@ -714,7 +715,7 @@
     }
 
     function pushHistory() {
-      state.history.push({ records: clone(state.records), clipboard: clone(state.clipboard) });
+      state.history.push({ records: clone(state.records), manualShelves: clone(state.manualShelves), clipboard: clone(state.clipboard) });
       if (state.history.length > 30) state.history.shift();
     }
 
@@ -725,6 +726,7 @@
         return;
       }
       state.records = last.records;
+      state.manualShelves = last.manualShelves || [];
       state.clipboard = last.clipboard;
       persist();
       render();
@@ -733,6 +735,7 @@
     function persist() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         records: state.records,
+        manualShelves: state.manualShelves,
         clipboard: state.clipboard
       }));
       renderStats();
@@ -744,6 +747,7 @@
         if (!raw) return;
         const parsed = JSON.parse(raw);
         state.records = Array.isArray(parsed.records) ? parsed.records.map(normalizeRecord) : [];
+        state.manualShelves = Array.isArray(parsed.manualShelves) ? parsed.manualShelves.map(normalizeManualShelf) : [];
         state.clipboard = Array.isArray(parsed.clipboard) ? parsed.clipboard : [];
       } catch (e) {
         console.error(e);
@@ -776,6 +780,18 @@
       const parsed = parsePosition(normalized.posizione);
       normalized._parsed = parsed;
       return normalized;
+    }
+
+    function normalizeManualShelf(shelf) {
+      const parsed = parseShelfKey(shelf.key || shelf.shelfKey || '');
+      return {
+        _id: shelf._id || uid(),
+        origine: normalizeOrigin(shelf.origine),
+        key: parsed?.shelfKey || normalizeText(shelf.key || shelf.shelfKey).toLowerCase(),
+        row: parsed?.row || '',
+        shelfLetter: parsed?.shelfLetter || '',
+        type: parsed?.type === 'row_shelf' ? 'row_shelf_level' : 'shelf_level'
+      };
     }
 
     function parsePosition(position) {
@@ -893,6 +909,10 @@
         if (!map.has(origin)) map.set(origin, { name: origin, count: 0 });
         map.get(origin).count += 1;
       });
+      state.manualShelves.forEach(shelf => {
+        const origin = normalizeOrigin(shelf.origine);
+        if (!map.has(origin)) map.set(origin, { name: origin, count: 0 });
+      });
       return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'it'));
     }
 
@@ -915,13 +935,36 @@
             type: p.type,
             products: 0,
             levels: new Set(),
-            parsed: p
+            parsed: p,
+            manualOnly: false
           });
         }
         const shelf = map.get(key);
         shelf.products += 1;
         if (p.level) shelf.levels.add(String(p.level));
       });
+
+      state.manualShelves
+        .filter(shelf => normalizeOrigin(shelf.origine) === origin)
+        .forEach(shelf => {
+          const key = shelf.key;
+          const parsed = shelf.type === 'row_shelf_level'
+            ? parsePosition(`${shelf.row}${shelf.shelfLetter}1`)
+            : parsePosition(`${shelf.shelfLetter}1`);
+          if (!map.has(key)) {
+            map.set(key, {
+              key,
+              label: key,
+              row: shelf.row || '',
+              shelfLetter: shelf.shelfLetter || '',
+              type: shelf.type,
+              products: 0,
+              levels: new Set(),
+              parsed,
+              manualOnly: true
+            });
+          }
+        });
 
       return [...map.values()].sort((a, b) => {
         if (a.parsed.sortRow !== b.parsed.sortRow) return a.parsed.sortRow - b.parsed.sortRow;
@@ -954,9 +997,12 @@
 
     function renderStats() {
       const origins = getOrigins();
-      const shelves = new Set(state.records.map(r => `${normalizeOrigin(r.origine)}__${r._parsed?.shelfKey || ''}`));
+      const shelves = new Set([
+        ...state.records.map(r => `${normalizeOrigin(r.origine)}__${r._parsed?.shelfKey || ''}`),
+        ...state.manualShelves.map(s => `${normalizeOrigin(s.origine)}__${s.key}`)
+      ]);
       el.statOrigins.textContent = origins.length;
-      el.statShelves.textContent = state.records.length ? shelves.size : 0;
+      el.statShelves.textContent = shelves.size;
       el.statProducts.textContent = state.records.length;
     }
 
@@ -1035,6 +1081,7 @@
 
       el.shelfGrid.innerHTML = filtered.map(shelf => {
         const levels = [...shelf.levels].sort((a, b) => Number(a) - Number(b));
+        const levelsText = levels.length ? levels.join(', ') : '—';
         return `
           <div
             class="shelf-card"
@@ -1045,7 +1092,7 @@
               <div class="shelf-title">${escapeHtml(shelf.label)}</div>
               <div class="chip-row" style="margin-top:8px;">
                 <span class="chip">${shelf.products} prodotti</span>
-                <span class="chip">Ripiani: ${levels.join(', ') || '-'}</span>
+                <span class="chip">Ripiani: ${levelsText}</span>
               </div>
             </div>
             <div class="shelf-actions">
@@ -1234,11 +1281,19 @@
       record.codice = updates.codice;
 
       const oldParsed = record._parsed || parsePosition(record.posizione);
-      if (updates.posizione) {
-        record.posizione = formatPosition(updates.posizione);
+      const manualLevel = updates.ripiano || oldParsed.level || '1';
+      const typedPosition = formatPosition(updates.posizione);
+      const typedParsed = typedPosition ? parsePosition(typedPosition) : null;
+
+      if (typedPosition && updates.ripiano) {
+        const baseParsed = typedParsed && typedParsed.type !== 'unknown' ? typedParsed : oldParsed;
+        record.posizione = buildPosition(baseParsed, manualLevel);
+      } else if (updates.ripiano) {
+        record.posizione = buildPosition(oldParsed, manualLevel);
+      } else if (typedPosition) {
+        record.posizione = typedPosition;
       } else {
-        const ripiano = updates.ripiano || oldParsed.level || '1';
-        record.posizione = buildPosition(oldParsed, ripiano);
+        record.posizione = buildPosition(oldParsed, manualLevel);
       }
 
       record._parsed = parsePosition(record.posizione);
@@ -1420,6 +1475,13 @@
         ensureTimestamp(record);
       });
 
+      state.manualShelves = state.manualShelves.map(shelf => {
+        if (normalizeOrigin(shelf.origine) !== state.selectedOrigin) return shelf;
+        const mapping = renameMap.get(shelf.key);
+        if (!mapping) return shelf;
+        return normalizeManualShelf({ ...shelf, key: mapping.newShelfKey });
+      });
+
       if (state.selectedShelfKey && renameMap.has(state.selectedShelfKey)) {
         state.selectedShelfKey = renameMap.get(state.selectedShelfKey).newShelfKey;
       }
@@ -1503,6 +1565,13 @@
         record._parsed = parsePosition(record.posizione);
         ensureTimestamp(record);
         touched += 1;
+      });
+
+      state.manualShelves = state.manualShelves.map(shelf => {
+        if (normalizeOrigin(shelf.origine) !== state.selectedOrigin) return shelf;
+        if (shelf.key !== fromKey) return shelf;
+        touched += 1;
+        return normalizeManualShelf({ ...shelf, key: toKey });
       });
 
       if (!touched) {
@@ -1591,21 +1660,13 @@
         ? `${parsedShelf.row}${parsedShelf.shelfLetter}${level}`
         : `${parsedShelf.shelfLetter}${level}`;
 
-      const record = normalizeRecord(ensureTimestamp({
+      const manualShelf = normalizeManualShelf({
         _id: uid(),
-        codice: '',
-        nome: '',
-        lunghezza: '',
-        larghezza: '',
-        spessore: '',
-        posizione,
-        quantita_pz: '',
         origine: state.selectedOrigin,
-        created_at: '',
-        updated_at: ''
-      }, true));
+        key: shelfKey
+      });
 
-      state.records.push(record);
+      state.manualShelves.push(manualShelf);
       persist();
       closeModal();
       render();
@@ -1639,6 +1700,9 @@
           pushHistory();
           const level = normalizeText(document.getElementById('newRipiano').value) || '1';
           const position = buildPosition(parsed, level);
+          const manualIndex = state.manualShelves.findIndex(s => normalizeOrigin(s.origine) === state.selectedOrigin && s.key === state.selectedShelfKey);
+          if (manualIndex !== -1) state.manualShelves.splice(manualIndex, 1);
+
           const record = normalizeRecord(ensureTimestamp({
             _id: uid(),
             codice: normalizeText(document.getElementById('newCodice').value),
@@ -1805,6 +1869,7 @@
       if (!confirm('Cancellare archivio locale e memoria prodotti tagliati?')) return;
       pushHistory();
       state.records = [];
+      state.manualShelves = [];
       state.clipboard = [];
       state.selectedOrigin = null;
       state.selectedShelfKey = null;
