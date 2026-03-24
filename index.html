@@ -18,6 +18,7 @@
       --border: #2a3140;
       --shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
       --radius: 18px;
+      --radius-sm: 12px;
       --font: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -69,7 +70,9 @@
       flex-wrap: wrap;
     }
 
-    .space-between { justify-content: space-between; }
+    .space-between {
+      justify-content: space-between;
+    }
 
     .panel {
       background: var(--panel);
@@ -81,7 +84,7 @@
 
     .panel + .panel { margin-top: 12px; }
 
-    .btn, .icon-btn, .select, .input {
+    .btn, .icon-btn, .select, .input, .textarea {
       border: 1px solid var(--border);
       background: var(--panel-2);
       color: var(--text);
@@ -98,7 +101,6 @@
 
     .btn:hover, .icon-btn:hover { transform: translateY(-1px); }
     .btn:active, .icon-btn:active { transform: translateY(0); }
-    .btn:disabled, .icon-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 
     .btn.primary {
       background: var(--accent);
@@ -126,7 +128,9 @@
       border-color: rgba(242,204,96,0.25);
     }
 
-    .btn.ghost, .icon-btn { background: var(--panel-2); }
+    .btn.ghost, .icon-btn {
+      background: var(--panel-2);
+    }
 
     .btn.compact, .icon-btn.compact {
       padding: 8px 10px;
@@ -135,11 +139,16 @@
       font-size: 0.92rem;
     }
 
-    .input, .select {
+    .input, .select, .textarea {
       width: 100%;
       padding: 12px 13px;
       min-height: 46px;
       outline: none;
+    }
+
+    .textarea {
+      min-height: 100px;
+      resize: vertical;
     }
 
     .header-actions {
@@ -169,14 +178,14 @@
       margin-top: 4px;
     }
 
-    .origin-grid, .shelf-grid {
+    .origin-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
-      margin-top: 12px;
+      margin-top: 10px;
     }
 
-    .origin-card, .shelf-card {
+    .origin-card {
       background: linear-gradient(180deg, #1d2432, #171a21);
       border: 1px solid var(--border);
       border-radius: 18px;
@@ -185,7 +194,11 @@
       text-align: left;
     }
 
-    .origin-card .count { margin-top: 8px; font-size: 0.9rem; color: var(--muted); }
+    .origin-card .count {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
 
     .toolbar {
       display: grid;
@@ -194,21 +207,48 @@
       margin-top: 10px;
     }
 
+    .shelf-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
     .shelf-card {
+      background: linear-gradient(180deg, #20283a, #171b24);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 14px;
       min-height: 100px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       gap: 10px;
+      cursor: pointer;
     }
 
-    .shelf-card.dragging { opacity: 0.35; }
-    .shelf-card.drop-target { outline: 2px dashed var(--accent); outline-offset: -4px; }
-    .shelf-title { font-size: 1.3rem; font-weight: 800; letter-spacing: 0.02em; }
+    .shelf-card.dragging {
+      opacity: 0.35;
+    }
 
-    .chip-row, .product-summary { display: flex; gap: 8px; flex-wrap: wrap; }
+    .shelf-card.drop-target {
+      outline: 2px dashed var(--accent);
+      outline-offset: -4px;
+    }
 
-    .chip, .pill {
+    .shelf-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -218,6 +258,12 @@
       background: var(--panel-2);
       color: var(--muted);
       font-size: 0.83rem;
+    }
+
+    .shelf-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
 
     .product-list {
@@ -244,7 +290,11 @@
       align-items: start;
     }
 
-    .product-title { font-size: 1rem; font-weight: 700; word-break: break-word; }
+    .product-title {
+      font-size: 1rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
 
     .ripiano-badge {
       min-width: 42px;
@@ -258,18 +308,35 @@
       font-weight: 800;
     }
 
+    .product-summary {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: #111521;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .product-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
     .product-edit {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
 
-    .product-edit .full { grid-column: 1 / -1; }
-
-    .product-actions {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+    .product-edit .full {
+      grid-column: 1 / -1;
     }
 
     .bottom-sheet {
@@ -345,7 +412,7 @@
       background: rgba(17,21,29,0.42);
       color: rgba(241,245,249,0.92);
       backdrop-filter: blur(8px);
-      display: none;
+      display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
@@ -354,10 +421,32 @@
       transition: 0.18s ease;
     }
 
-    .side-nav:hover { background: rgba(17,21,29,0.72); }
-    .side-nav:disabled { opacity: 0.28; cursor: default; }
-    .side-nav.left { left: 0; border-left: 0; border-radius: 0 14px 14px 0; }
-    .side-nav.right { right: 0; border-right: 0; border-radius: 14px 0 0 14px; }
+    .side-nav:hover {
+      background: rgba(17,21,29,0.72);
+    }
+
+    .side-nav:disabled {
+      opacity: 0.28;
+      cursor: default;
+    }
+
+    .side-nav.left {
+      left: 0;
+      border-left: 0;
+      border-radius: 0 14px 14px 0;
+    }
+
+    .side-nav.right {
+      right: 0;
+      border-right: 0;
+      border-radius: 14px 0 0 14px;
+    }
+
+    .side-nav .arrow {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+    }
 
     .modal-backdrop {
       position: fixed;
@@ -388,7 +477,9 @@
       margin-top: 12px;
     }
 
-    .modal-grid .full { grid-column: 1 / -1; }
+    .modal-grid .full {
+      grid-column: 1 / -1;
+    }
 
     .note {
       margin-top: 8px;
@@ -399,6 +490,15 @@
       color: #cfe6ff;
     }
 
+    .danger-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,123,114,0.08);
+      border: 1px solid rgba(255,123,114,0.18);
+      color: #ffd0cc;
+    }
+
     @media (max-width: 520px) {
       .origin-grid,
       .shelf-grid,
@@ -406,16 +506,26 @@
       .product-edit,
       .modal-grid,
       .header-actions,
+      .shelf-actions,
       .product-actions {
         grid-template-columns: 1fr 1fr;
       }
-      .toolbar { grid-template-columns: 1fr; }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .product-actions .btn,
+      .shelf-actions .btn,
+      .header-actions .btn {
+        min-width: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <button class="side-nav left hidden" id="sidePrevShelfBtn" aria-label="Scaffale precedente">‹</button>
-  <button class="side-nav right hidden" id="sideNextShelfBtn" aria-label="Scaffale successivo">›</button>
+  <button class="side-nav left hidden" id="sidePrevShelfBtn" aria-label="Scaffale precedente"><span class="arrow">‹</span></button>
+  <button class="side-nav right hidden" id="sideNextShelfBtn" aria-label="Scaffale successivo"><span class="arrow">›</span></button>
 
   <div class="app">
     <div class="topbar">
@@ -430,6 +540,13 @@
 
     <section id="screenHome">
       <div class="panel">
+        <div class="row space-between">
+          <div>
+            <h2>Archivio locale</h2>
+            <p class="muted small">Il file viene caricato e modificato sul dispositivo. Nessun backend richiesto.</p>
+          </div>
+        </div>
+
         <div class="header-actions">
           <label class="btn primary" for="csvInput">Importa CSV</label>
           <input id="csvInput" type="file" accept=".csv,text/csv" class="hidden" />
@@ -439,14 +556,30 @@
         </div>
 
         <div class="stats">
-          <div class="stat"><div class="muted tiny">Origini</div><div class="n" id="statOrigins">0</div></div>
-          <div class="stat"><div class="muted tiny">Scaffali</div><div class="n" id="statShelves">0</div></div>
-          <div class="stat"><div class="muted tiny">Prodotti</div><div class="n" id="statProducts">0</div></div>
+          <div class="stat">
+            <div class="muted tiny">Origini</div>
+            <div class="n" id="statOrigins">0</div>
+          </div>
+          <div class="stat">
+            <div class="muted tiny">Scaffali</div>
+            <div class="n" id="statShelves">0</div>
+          </div>
+          <div class="stat">
+            <div class="muted tiny">Prodotti</div>
+            <div class="n" id="statProducts">0</div>
+          </div>
+        </div>
+
+        <div class="note">
+          Formati posizione supportati:
+          <br />• <strong>b2</strong> → scaffale <strong>b</strong>, ripiano <strong>2</strong>
+          <br />• <strong>2f3</strong> → fila <strong>2</strong>, scaffale <strong>f</strong>, ripiano <strong>3</strong>
         </div>
       </div>
 
       <div class="panel">
         <h2>Origini</h2>
+        <p class="muted small" style="margin-top: 4px;">Seleziona un'origine per vedere e riorganizzare i suoi scaffali.</p>
         <div id="originGrid" class="origin-grid"></div>
       </div>
     </section>
@@ -467,7 +600,10 @@
           <button class="btn compact" id="renameShelfBtn">Rinomina</button>
         </div>
 
-        <div class="note hidden" id="reorderNote">In modalità riordino puoi trascinare uno scaffale tra gli altri.</div>
+        <div class="note" id="reorderNote" style="display:none;">
+          In modalità riordino puoi trascinare uno scaffale tra gli altri. La rinomina avviene a catena solo nell'origine corrente e, per i formati con fila, solo sulla stessa fila.
+        </div>
+
         <div id="shelfGrid" class="shelf-grid"></div>
       </div>
     </section>
@@ -479,7 +615,9 @@
             <h2 id="shelfTitle">Scaffale</h2>
             <p class="muted small" id="shelfMeta"></p>
           </div>
-          <button class="btn compact primary" id="addProductBtn">+ Prodotto</button>
+          <div class="row" style="margin-left:auto;">
+            <button class="btn compact primary" id="addProductBtn">+ Prodotto</button>
+          </div>
         </div>
 
         <div class="toolbar">
@@ -490,6 +628,8 @@
       </div>
 
       <div class="panel">
+        <h3>Prodotti nello scaffale</h3>
+        <p class="muted small" style="margin-top: 4px;">I prodotti sono visibili subito. Il ripiano si cambia direttamente su ogni scheda.</p>
         <div id="productList" class="product-list"></div>
       </div>
     </section>
@@ -500,7 +640,7 @@
       <div class="clipboard-head">
         <div>
           <strong>Tagliati / copiati</strong>
-          <div class="tiny muted">Restano in memoria sul dispositivo.</div>
+          <div class="tiny muted">Puoi incollarli nello scaffale aperto oppure lasciarli in memoria sul dispositivo.</div>
         </div>
         <button class="btn compact danger" id="clearClipboardBtn">Svuota</button>
       </div>
@@ -511,7 +651,7 @@
   <div id="modalRoot" class="hidden"></div>
 
   <script>
-    const STORAGE_KEY = 'magazzino_mobile_offline_fixed_v1';
+    const STORAGE_KEY = 'magazzino_mobile_offline_v1';
 
     const state = {
       records: [],
@@ -522,7 +662,10 @@
       selectedShelfKey: null,
       reorderMode: false,
       dragShelfKey: null,
-      filters: { shelfSearch: '', productSearch: '' },
+      filters: {
+        shelfSearch: '',
+        productSearch: ''
+      },
       history: []
     };
 
@@ -556,10 +699,10 @@
       addProductBtn: document.getElementById('addProductBtn'),
       pasteAllBtn: document.getElementById('pasteAllBtn'),
       saveNowBtn: document.getElementById('saveNowBtn'),
-      clipboardBody: document.getElementById('clipboardBody'),
-      clearClipboardBtn: document.getElementById('clearClipboardBtn'),
       sidePrevShelfBtn: document.getElementById('sidePrevShelfBtn'),
       sideNextShelfBtn: document.getElementById('sideNextShelfBtn'),
+      clipboardBody: document.getElementById('clipboardBody'),
+      clearClipboardBtn: document.getElementById('clearClipboardBtn'),
       modalRoot: document.getElementById('modalRoot')
     };
 
@@ -567,67 +710,60 @@
       return 'r_' + Math.random().toString(36).slice(2, 11) + Date.now().toString(36);
     }
 
-    function clone(v) { return JSON.parse(JSON.stringify(v)); }
-    function normalizeText(v) { return String(v ?? '').trim(); }
-    function normalizeOrigin(v) { return normalizeText(v || 'senza_origine'); }
-    function nowIso() { return new Date().toISOString(); }
-
-    function ensureTimestamp(record, isNew = false) {
-      if (isNew && !record.created_at) record.created_at = nowIso();
-      record.updated_at = nowIso();
-      return record;
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
     }
 
-    function letterToIndex(letter) {
-      if (!letter) return 999;
-      return letter.toLowerCase().charCodeAt(0) - 97;
+    function pushHistory() {
+      state.history.push({ records: clone(state.records), manualShelves: clone(state.manualShelves), clipboard: clone(state.clipboard) });
+      if (state.history.length > 30) state.history.shift();
     }
 
-    function indexToLetter(index) {
-      return String.fromCharCode(97 + Math.max(0, Number(index) || 0));
-    }
-
-    function parsePosition(position) {
-      const value = normalizeText(position).toLowerCase();
-      const m1 = value.match(/^(\d+)([a-z])(\d+)$/i);
-      if (m1) {
-        return {
-          raw: value, type: 'row_shelf_level', row: m1[1], shelfLetter: m1[2].toLowerCase(),
-          shelfKey: `${m1[1]}${m1[2].toLowerCase()}`, shelfLabel: `${m1[1]}${m1[2].toLowerCase()}`,
-          level: m1[3], sortRow: Number(m1[1]), sortShelf: letterToIndex(m1[2]), sortLevel: Number(m1[3])
-        };
+    function undoLastAction() {
+      const last = state.history.pop();
+      if (!last) {
+        alert('Nessuna operazione da annullare.');
+        return;
       }
-      const m2 = value.match(/^([a-z])(\d+)$/i);
-      if (m2) {
-        return {
-          raw: value, type: 'shelf_level', row: '', shelfLetter: m2[1].toLowerCase(),
-          shelfKey: m2[1].toLowerCase(), shelfLabel: m2[1].toLowerCase(), level: m2[2],
-          sortRow: 0, sortShelf: letterToIndex(m2[1]), sortLevel: Number(m2[2])
-        };
+      state.records = last.records;
+      state.manualShelves = last.manualShelves || [];
+      state.clipboard = last.clipboard;
+      persist();
+      render();
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        records: state.records,
+        manualShelves: state.manualShelves,
+        clipboard: state.clipboard
+      }));
+      renderStats();
+    }
+
+    function restore() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        state.records = Array.isArray(parsed.records) ? parsed.records.map(normalizeRecord) : [];
+        state.manualShelves = Array.isArray(parsed.manualShelves) ? parsed.manualShelves.map(normalizeManualShelf) : [];
+        state.clipboard = Array.isArray(parsed.clipboard) ? parsed.clipboard : [];
+      } catch (e) {
+        console.error(e);
       }
-      return {
-        raw: value, type: 'unknown', row: '', shelfLetter: '', shelfKey: value, shelfLabel: value,
-        level: '', sortRow: 999999, sortShelf: 999999, sortLevel: 999999
-      };
     }
 
-    function parseShelfKey(key) {
-      const value = normalizeText(key).toLowerCase();
-      const m1 = value.match(/^(\d+)([a-z])$/i);
-      if (m1) return { type: 'row_shelf', row: m1[1], shelfLetter: m1[2].toLowerCase(), shelfKey: value };
-      const m2 = value.match(/^([a-z])$/i);
-      if (m2) return { type: 'shelf', row: '', shelfLetter: m2[1].toLowerCase(), shelfKey: value };
-      return null;
+    function normalizeText(v) {
+      return String(v ?? '').trim();
     }
 
-    function buildPosition(parsed, level) {
-      const lv = normalizeText(level) || '1';
-      if (parsed.type === 'row_shelf' || parsed.type === 'row_shelf_level') return `${parsed.row}${parsed.shelfLetter}${lv}`.toLowerCase();
-      return `${parsed.shelfLetter}${lv}`.toLowerCase();
+    function normalizeOrigin(v) {
+      return normalizeText(v || 'senza_origine');
     }
 
     function normalizeRecord(record) {
-      const out = {
+      const normalized = {
         _id: record._id || uid(),
         codice: normalizeText(record.codice),
         nome: normalizeText(record.nome),
@@ -640,87 +776,111 @@
         created_at: normalizeText(record.created_at),
         updated_at: normalizeText(record.updated_at)
       };
-      out._parsed = parsePosition(out.posizione);
-      return out;
+
+      const parsed = parsePosition(normalized.posizione);
+      normalized._parsed = parsed;
+      return normalized;
     }
 
     function normalizeManualShelf(shelf) {
-      const parsed = parseShelfKey(shelf.key);
+      const parsed = parseShelfKey(shelf.key || shelf.shelfKey || '');
       return {
         _id: shelf._id || uid(),
         origine: normalizeOrigin(shelf.origine),
-        key: parsed.shelfKey,
-        row: parsed.row,
-        shelfLetter: parsed.shelfLetter,
-        type: parsed.type === 'row_shelf' ? 'row_shelf_level' : 'shelf_level'
+        key: parsed?.shelfKey || normalizeText(shelf.key || shelf.shelfKey).toLowerCase(),
+        row: parsed?.row || '',
+        shelfLetter: parsed?.shelfLetter || '',
+        type: parsed?.type === 'row_shelf' ? 'row_shelf_level' : 'shelf_level'
       };
     }
 
-    function pushHistory() {
-      state.history.push({ records: clone(state.records), manualShelves: clone(state.manualShelves), clipboard: clone(state.clipboard) });
-      if (state.history.length > 30) state.history.shift();
+    function parsePosition(position) {
+      const value = normalizeText(position).toLowerCase();
+      if (!value) {
+        return {
+          raw: '',
+          type: 'unknown',
+          row: '',
+          shelfLetter: '',
+          shelfKey: '',
+          shelfLabel: 'senza posizione',
+          level: '',
+          sortRow: Number.MAX_SAFE_INTEGER,
+          sortShelf: Number.MAX_SAFE_INTEGER,
+          sortLevel: Number.MAX_SAFE_INTEGER
+        };
+      }
+
+      const rowShelfLevel = value.match(/^(\d+)([a-z])(\d+)$/i);
+      if (rowShelfLevel) {
+        const row = rowShelfLevel[1];
+        const shelfLetter = rowShelfLevel[2].toLowerCase();
+        const level = rowShelfLevel[3];
+        return {
+          raw: value,
+          type: 'row_shelf_level',
+          row,
+          shelfLetter,
+          shelfKey: `${row}${shelfLetter}`,
+          shelfLabel: `${row}${shelfLetter}`,
+          level,
+          sortRow: Number(row),
+          sortShelf: letterToIndex(shelfLetter),
+          sortLevel: Number(level)
+        };
+      }
+
+      const shelfLevel = value.match(/^([a-z])(\d+)$/i);
+      if (shelfLevel) {
+        const shelfLetter = shelfLevel[1].toLowerCase();
+        const level = shelfLevel[2];
+        return {
+          raw: value,
+          type: 'shelf_level',
+          row: '',
+          shelfLetter,
+          shelfKey: shelfLetter,
+          shelfLabel: shelfLetter,
+          level,
+          sortRow: 0,
+          sortShelf: letterToIndex(shelfLetter),
+          sortLevel: Number(level)
+        };
+      }
+
+      return {
+        raw: value,
+        type: 'unknown',
+        row: '',
+        shelfLetter: value,
+        shelfKey: value,
+        shelfLabel: value,
+        level: '',
+        sortRow: Number.MAX_SAFE_INTEGER,
+        sortShelf: Number.MAX_SAFE_INTEGER,
+        sortLevel: Number.MAX_SAFE_INTEGER
+      };
     }
 
-    function persist() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ records: state.records, manualShelves: state.manualShelves, clipboard: state.clipboard }));
-      renderStats();
+    function buildPosition(parsed, level) {
+      const safeLevel = normalizeText(level);
+      if (parsed.type === 'row_shelf_level') return `${parsed.row}${parsed.shelfLetter}${safeLevel}`.toLowerCase();
+      if (parsed.type === 'shelf_level') return `${parsed.shelfLetter}${safeLevel}`.toLowerCase();
+      return safeLevel ? `${parsed.shelfKey}${safeLevel}`.toLowerCase() : parsed.shelfKey;
     }
 
-    function restore() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      try {
-        const parsed = JSON.parse(raw);
-        state.records = Array.isArray(parsed.records) ? parsed.records.map(normalizeRecord) : [];
-        state.manualShelves = Array.isArray(parsed.manualShelves) ? parsed.manualShelves.map(normalizeManualShelf) : [];
-        state.clipboard = Array.isArray(parsed.clipboard) ? parsed.clipboard : [];
-      } catch (e) { console.error(e); }
+    function letterToIndex(letter) {
+      if (!letter) return 999;
+      return letter.toLowerCase().charCodeAt(0) - 97;
     }
 
-    function getOrigins() {
-      const map = new Map();
-      state.records.forEach(r => { const o = normalizeOrigin(r.origine); map.set(o, (map.get(o) || 0) + 1); });
-      state.manualShelves.forEach(s => { const o = normalizeOrigin(s.origine); if (!map.has(o)) map.set(o, 0); });
-      return [...map.entries()].map(([name, count]) => ({ name, count })).sort((a,b) => a.name.localeCompare(b.name, 'it'));
+    function indexToLetter(index) {
+      const n = Math.max(0, Number(index) || 0);
+      return String.fromCharCode(97 + n);
     }
 
-    function getRecordsByOrigin(origin) {
-      return state.records.filter(r => normalizeOrigin(r.origine) === origin);
-    }
-
-    function getShelvesForOrigin(origin) {
-      const map = new Map();
-      getRecordsByOrigin(origin).forEach(record => {
-        const p = record._parsed;
-        if (!map.has(p.shelfKey)) {
-          map.set(p.shelfKey, { key: p.shelfKey, label: p.shelfLabel, row: p.row, shelfLetter: p.shelfLetter, parsed: p, products: 0, levels: new Set() });
-        }
-        const shelf = map.get(p.shelfKey);
-        shelf.products += 1;
-        if (p.level) shelf.levels.add(String(p.level));
-      });
-      state.manualShelves.filter(s => s.origine === origin).forEach(shelf => {
-        if (!map.has(shelf.key)) {
-          const parsed = shelf.type === 'row_shelf_level' ? parsePosition(`${shelf.row}${shelf.shelfLetter}1`) : parsePosition(`${shelf.shelfLetter}1`);
-          map.set(shelf.key, { key: shelf.key, label: shelf.key, row: shelf.row, shelfLetter: shelf.shelfLetter, parsed, products: 0, levels: new Set() });
-        }
-      });
-      return [...map.values()].sort((a,b) => a.parsed.sortRow - b.parsed.sortRow || a.parsed.sortShelf - b.parsed.sortShelf);
-    }
-
-    function getCurrentShelfRecords() {
-      if (!state.selectedOrigin || !state.selectedShelfKey) return [];
-      return state.records.filter(r => r.origine === state.selectedOrigin && r._parsed.shelfKey === state.selectedShelfKey);
-    }
-
-    function renderStats() {
-      const shelves = new Set([
-        ...state.records.map(r => `${r.origine}__${r._parsed.shelfKey}`),
-        ...state.manualShelves.map(s => `${s.origine}__${s.key}`)
-      ]);
-      el.statOrigins.textContent = getOrigins().length;
-      el.statShelves.textContent = shelves.size;
-      el.statProducts.textContent = state.records.length;
+    function formatPosition(raw) {
+      return normalizeText(raw).toLowerCase();
     }
 
     function escapeHtml(str) {
@@ -732,121 +892,118 @@
         .replace(/'/g, '&#039;');
     }
 
-    function updateLayout() {
-      el.screenHome.classList.toggle('hidden', state.currentScreen !== 'home');
-      el.screenOrigin.classList.toggle('hidden', state.currentScreen !== 'origin');
-      el.screenShelf.classList.toggle('hidden', state.currentScreen !== 'shelf');
-      el.backBtn.classList.toggle('hidden', state.currentScreen === 'home');
-      const showSides = state.currentScreen === 'shelf';
-      el.sidePrevShelfBtn.style.display = showSides ? 'flex' : 'none';
-      el.sideNextShelfBtn.style.display = showSides ? 'flex' : 'none';
+    function nowIso() {
+      return new Date().toISOString();
     }
 
-    function renderHome() {
-      const origins = getOrigins();
-      if (!origins.length) {
-        el.originGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessun dato caricato.</div>';
-        return;
-      }
-      el.originGrid.innerHTML = origins.map(o => `<button class="origin-card" data-origin="${escapeHtml(o.name)}"><div><strong>${escapeHtml(o.name)}</strong></div><div class="count">${o.count} prodotti</div></button>`).join('');
-      el.originGrid.querySelectorAll('[data-origin]').forEach(btn => btn.onclick = () => {
-        state.selectedOrigin = btn.dataset.origin;
-        state.currentScreen = 'origin';
-        state.selectedShelfKey = null;
-        render();
+    function ensureTimestamp(record, isNew = false) {
+      if (isNew && !record.created_at) record.created_at = nowIso();
+      record.updated_at = nowIso();
+      return record;
+    }
+
+    function getOrigins() {
+      const map = new Map();
+      state.records.forEach(record => {
+        const origin = normalizeOrigin(record.origine);
+        if (!map.has(origin)) map.set(origin, { name: origin, count: 0 });
+        map.get(origin).count += 1;
       });
+      state.manualShelves.forEach(shelf => {
+        const origin = normalizeOrigin(shelf.origine);
+        if (!map.has(origin)) map.set(origin, { name: origin, count: 0 });
+      });
+      return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'it'));
     }
 
-    function renderOrigin() {
-      if (!state.selectedOrigin) return;
-      const shelves = getShelvesForOrigin(state.selectedOrigin);
-      const q = normalizeText(el.shelfSearchInput.value).toLowerCase();
-      const filtered = q ? shelves.filter(s => s.label.includes(q)) : shelves;
-      el.originTitle.textContent = state.selectedOrigin;
-      el.originMeta.textContent = `${shelves.length} scaffali · ${getRecordsByOrigin(state.selectedOrigin).length} prodotti`;
-      el.reorderNote.classList.toggle('hidden', !state.reorderMode);
-      el.toggleReorderBtn.textContent = `Modalità riordino: ${state.reorderMode ? 'ON' : 'OFF'}`;
-      if (!filtered.length) {
-        el.shelfGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessuno scaffale trovato.</div>';
-        return;
-      }
-      el.shelfGrid.innerHTML = filtered.map(s => {
-        const levels = [...s.levels].sort((a,b) => Number(a) - Number(b));
-        return `<div class="shelf-card" data-shelf-key="${escapeHtml(s.key)}" draggable="${state.reorderMode}">
-          <div><div class="shelf-title">${escapeHtml(s.label)}</div><div class="chip-row" style="margin-top:8px;"><span class="chip">${s.products} prodotti</span><span class="chip">Ripiani: ${levels.length ? levels.join(', ') : '—'}</span></div></div>
-          <div class="chip-row"><button class="btn compact ghost" data-open-shelf="${escapeHtml(s.key)}">Apri</button><button class="btn compact warning" data-rename-shelf="${escapeHtml(s.key)}">Rinomina</button></div>
-        </div>`;
-      }).join('');
+    function getRecordsByOrigin(origin) {
+      return state.records.filter(r => normalizeOrigin(r.origine) === origin);
+    }
 
-      el.shelfGrid.querySelectorAll('[data-open-shelf]').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); openShelf(btn.dataset.openShelf); });
-      el.shelfGrid.querySelectorAll('[data-rename-shelf]').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); promptRenameShelf(btn.dataset.renameShelf); });
-      el.shelfGrid.querySelectorAll('.shelf-card').forEach(card => {
-        const key = card.dataset.shelfKey;
-        card.onclick = (e) => { if (!e.target.closest('button')) openShelf(key); };
-        if (state.reorderMode) {
-          card.ondragstart = () => { state.dragShelfKey = key; card.classList.add('dragging'); };
-          card.ondragend = () => { state.dragShelfKey = null; card.classList.remove('dragging'); document.querySelectorAll('.drop-target').forEach(n => n.classList.remove('drop-target')); };
-          card.ondragover = (e) => { e.preventDefault(); if (state.dragShelfKey && state.dragShelfKey !== key) card.classList.add('drop-target'); };
-          card.ondragleave = () => card.classList.remove('drop-target');
-          card.ondrop = (e) => { e.preventDefault(); card.classList.remove('drop-target'); if (state.dragShelfKey && state.dragShelfKey !== key) reorderShelves(state.dragShelfKey, key); };
+    function getShelvesForOrigin(origin) {
+      const records = getRecordsByOrigin(origin);
+      const map = new Map();
+      records.forEach(record => {
+        const p = record._parsed || parsePosition(record.posizione);
+        const key = p.shelfKey || 'senza_posizione';
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            label: p.shelfLabel || key,
+            row: p.row || '',
+            shelfLetter: p.shelfLetter || '',
+            type: p.type,
+            products: 0,
+            levels: new Set(),
+            parsed: p,
+            manualOnly: false
+          });
         }
+        const shelf = map.get(key);
+        shelf.products += 1;
+        if (p.level) shelf.levels.add(String(p.level));
+      });
+
+      state.manualShelves
+        .filter(shelf => normalizeOrigin(shelf.origine) === origin)
+        .forEach(shelf => {
+          const key = shelf.key;
+          const parsed = shelf.type === 'row_shelf_level'
+            ? parsePosition(`${shelf.row}${shelf.shelfLetter}1`)
+            : parsePosition(`${shelf.shelfLetter}1`);
+          if (!map.has(key)) {
+            map.set(key, {
+              key,
+              label: key,
+              row: shelf.row || '',
+              shelfLetter: shelf.shelfLetter || '',
+              type: shelf.type,
+              products: 0,
+              levels: new Set(),
+              parsed,
+              manualOnly: true
+            });
+          }
+        });
+
+      return [...map.values()].sort((a, b) => {
+        if (a.parsed.sortRow !== b.parsed.sortRow) return a.parsed.sortRow - b.parsed.sortRow;
+        return a.parsed.sortShelf - b.parsed.sortShelf;
       });
     }
 
-    function renderShelf() {
-      if (!state.selectedOrigin || !state.selectedShelfKey) return;
-      const shelves = getShelvesForOrigin(state.selectedOrigin);
-      const currentIndex = shelves.findIndex(s => s.key === state.selectedShelfKey);
-      const shelf = shelves[currentIndex];
-      const records = getCurrentShelfRecords();
-      el.shelfTitle.textContent = `Scaffale ${shelf ? shelf.label : state.selectedShelfKey}`;
-      el.shelfMeta.textContent = `${state.selectedOrigin} · ${records.length} prodotti · ${currentIndex + 1}/${shelves.length}`;
-      el.sidePrevShelfBtn.disabled = currentIndex <= 0;
-      el.sideNextShelfBtn.disabled = currentIndex >= shelves.length - 1;
-
-      const q = normalizeText(el.productSearchInput.value).toLowerCase();
-      const filtered = q ? records.filter(r => [r.nome, r.codice, r.posizione, r.quantita_pz].join(' ').toLowerCase().includes(q)) : records;
-      if (!filtered.length) {
-        el.productList.innerHTML = '<div class="empty">Nessun prodotto in questo scaffale.</div>';
-        return;
-      }
-      const sorted = [...filtered].sort((a,b) => a._parsed.sortLevel - b._parsed.sortLevel || a.nome.localeCompare(b.nome, 'it'));
-      el.productList.innerHTML = sorted.map(r => {
-        const p = r._parsed;
-        return `<div class="product-card" data-product-id="${escapeHtml(r._id)}">
-          <div class="product-top">
-            <div><div class="product-title">${escapeHtml(r.nome || '(senza nome)')}</div><div class="product-summary" style="margin-top:8px;"><span class="pill">Codice: ${escapeHtml(r.codice || '-')}</span><span class="pill">Posizione: ${escapeHtml(r.posizione || '-')}</span><span class="pill">Q.tà: ${escapeHtml(r.quantita_pz || '-')}</span></div></div>
-            <div class="ripiano-badge">${escapeHtml(p.level || '?')}</div>
-          </div>
-          <div class="product-edit">
-            <input class="input full" data-field="nome" value="${escapeHtml(r.nome)}" placeholder="Nome prodotto" />
-            <input class="input" data-field="lunghezza" value="${escapeHtml(r.lunghezza)}" placeholder="Lunghezza" />
-            <input class="input" data-field="larghezza" value="${escapeHtml(r.larghezza)}" placeholder="Larghezza" />
-            <input class="input" data-field="spessore" value="${escapeHtml(r.spessore)}" placeholder="Spessore" />
-            <input class="input" data-field="quantita_pz" value="${escapeHtml(r.quantita_pz)}" placeholder="Quantità" />
-            <input class="input" data-field="codice" value="${escapeHtml(r.codice)}" placeholder="Codice" />
-            <input class="input" data-field="ripiano" value="${escapeHtml(p.level)}" placeholder="Ripiano" />
-            <input class="input full" data-field="posizione" value="${escapeHtml(r.posizione)}" placeholder="Posizione completa" />
-          </div>
-          <div class="product-actions">
-            <button class="btn compact primary" data-save-product="${escapeHtml(r._id)}">Salva</button>
-            <button class="btn compact" data-cut-product="${escapeHtml(r._id)}">Taglia</button>
-            <button class="btn compact warning" data-copy-product="${escapeHtml(r._id)}">Copia</button>
-            <button class="btn compact danger" data-delete-product="${escapeHtml(r._id)}">Elimina</button>
-          </div>
-        </div>`;
-      }).join('');
-      attachProductEvents();
+    function getCurrentShelfRecords() {
+      if (!state.selectedOrigin || !state.selectedShelfKey) return [];
+      return state.records.filter(record => normalizeOrigin(record.origine) === state.selectedOrigin && (record._parsed?.shelfKey === state.selectedShelfKey));
     }
 
-    function renderClipboard() {
-      if (!state.clipboard.length) {
-        el.clipboardBody.innerHTML = '<div class="empty">Nessun prodotto tagliato o copiato.</div>';
-        return;
-      }
-      el.clipboardBody.innerHTML = state.clipboard.map((item, i) => `<div class="clipboard-item"><div><div><strong>${escapeHtml(item.record.nome || '(senza nome)')}</strong></div><div class="tiny muted">${escapeHtml(item.mode.toUpperCase())} · ${escapeHtml(item.sourceOrigin)} · ${escapeHtml(item.sourcePosition)}</div></div><button class="btn compact primary" data-paste-index="${i}">Incolla</button><button class="btn compact ghost" data-remove-clip-index="${i}">×</button></div>`).join('');
-      el.clipboardBody.querySelectorAll('[data-paste-index]').forEach(btn => btn.onclick = () => pasteClipboardItem(Number(btn.dataset.pasteIndex)));
-      el.clipboardBody.querySelectorAll('[data-remove-clip-index]').forEach(btn => btn.onclick = () => { pushHistory(); state.clipboard.splice(Number(btn.dataset.removeClipIndex), 1); persist(); renderClipboard(); });
+    function getOrderedShelvesForCurrentOrigin() {
+      if (!state.selectedOrigin) return [];
+      return getShelvesForOrigin(state.selectedOrigin);
+    }
+
+    function goToAdjacentShelf(direction) {
+      const shelves = getOrderedShelvesForCurrentOrigin();
+      if (!shelves.length || !state.selectedShelfKey) return;
+      const currentIndex = shelves.findIndex(s => s.key === state.selectedShelfKey);
+      if (currentIndex === -1) return;
+      const nextIndex = currentIndex + direction;
+      if (nextIndex < 0 || nextIndex >= shelves.length) return;
+      state.selectedShelfKey = shelves[nextIndex].key;
+      state.filters.productSearch = '';
+      if (el.productSearchInput) el.productSearchInput.value = '';
+      render();
+    }
+
+    function renderStats() {
+      const origins = getOrigins();
+      const shelves = new Set([
+        ...state.records.map(r => `${normalizeOrigin(r.origine)}__${r._parsed?.shelfKey || ''}`),
+        ...state.manualShelves.map(s => `${normalizeOrigin(s.origine)}__${s.key}`)
+      ]);
+      el.statOrigins.textContent = origins.length;
+      el.statShelves.textContent = shelves.size;
+      el.statProducts.textContent = state.records.length;
     }
 
     function render() {
@@ -858,94 +1015,406 @@
       updateLayout();
     }
 
-    function openShelf(key) {
-      state.selectedShelfKey = key;
+    function updateLayout() {
+      el.screenHome.classList.toggle('hidden', state.currentScreen !== 'home');
+      el.screenOrigin.classList.toggle('hidden', state.currentScreen !== 'origin');
+      el.screenShelf.classList.toggle('hidden', state.currentScreen !== 'shelf');
+      el.backBtn.classList.toggle('hidden', state.currentScreen === 'home');
+      el.sidePrevShelfBtn.classList.toggle('hidden', state.currentScreen !== 'shelf');
+      el.sideNextShelfBtn.classList.toggle('hidden', state.currentScreen !== 'shelf');
+      el.sidePrevShelfBtn.style.display = state.currentScreen === 'shelf' ? 'flex' : 'none';
+      el.sideNextShelfBtn.style.display = state.currentScreen === 'shelf' ? 'flex' : 'none';
+
+      if (state.currentScreen === 'home') {
+        el.pageTitle.textContent = 'Magazzino Mobile Offline';
+        el.pageSubtitle.textContent = 'Importa un CSV, lavora in locale, esporta il file aggiornato.';
+      } else if (state.currentScreen === 'origin') {
+        el.pageTitle.textContent = 'Scaffali';
+        el.pageSubtitle.textContent = state.selectedOrigin || '';
+      } else {
+        el.pageTitle.textContent = 'Contenuto scaffale';
+        el.pageSubtitle.textContent = `${state.selectedOrigin || ''} · ${state.selectedShelfKey || ''}`;
+      }
+    }
+
+    function renderHome() {
+      const origins = getOrigins();
+      if (!origins.length) {
+        el.originGrid.innerHTML = '<div class="empty" style="grid-column: 1 / -1;">Nessun dato caricato. Importa un CSV per iniziare.</div>';
+        return;
+      }
+
+      el.originGrid.innerHTML = origins.map(origin => `
+        <button class="origin-card" data-origin="${escapeHtml(origin.name)}">
+          <div><strong>${escapeHtml(origin.name)}</strong></div>
+          <div class="count">${origin.count} prodotti</div>
+        </button>
+      `).join('');
+
+      el.originGrid.querySelectorAll('[data-origin]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedOrigin = btn.dataset.origin;
+          state.currentScreen = 'origin';
+          state.selectedShelfKey = null;
+          state.filters.shelfSearch = '';
+          el.shelfSearchInput.value = '';
+          render();
+        });
+      });
+    }
+
+    function renderOrigin() {
+      if (!state.selectedOrigin) return;
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const search = state.filters.shelfSearch.trim().toLowerCase();
+      const filtered = search ? shelves.filter(s => s.label.toLowerCase().includes(search)) : shelves;
+
+      el.originTitle.textContent = state.selectedOrigin;
+      el.originMeta.textContent = `${shelves.length} scaffali · ${getRecordsByOrigin(state.selectedOrigin).length} prodotti`;
+      el.toggleReorderBtn.textContent = `Modalità riordino: ${state.reorderMode ? 'ON' : 'OFF'}`;
+      el.reorderNote.style.display = state.reorderMode ? 'block' : 'none';
+
+      if (!filtered.length) {
+        el.shelfGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessuno scaffale trovato.</div>';
+        return;
+      }
+
+      el.shelfGrid.innerHTML = filtered.map(shelf => {
+        const levels = [...shelf.levels].sort((a, b) => Number(a) - Number(b));
+        const levelsText = levels.length ? levels.join(', ') : '—';
+        return `
+          <div
+            class="shelf-card"
+            data-shelf-key="${escapeHtml(shelf.key)}"
+            draggable="${state.reorderMode ? 'true' : 'false'}"
+          >
+            <div>
+              <div class="shelf-title">${escapeHtml(shelf.label)}</div>
+              <div class="chip-row" style="margin-top:8px;">
+                <span class="chip">${shelf.products} prodotti</span>
+                <span class="chip">Ripiani: ${levelsText}</span>
+              </div>
+            </div>
+            <div class="shelf-actions">
+              <button class="btn compact ghost" data-open-shelf="${escapeHtml(shelf.key)}">Apri</button>
+              <button class="btn compact warning" data-prompt-rename-shelf="${escapeHtml(shelf.key)}">Rinomina</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      el.shelfGrid.querySelectorAll('[data-open-shelf]').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.stopPropagation();
+          openShelf(btn.dataset.openShelf);
+        });
+      });
+
+      el.shelfGrid.querySelectorAll('[data-prompt-rename-shelf]').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.stopPropagation();
+          promptRenameShelf(btn.dataset.promptRenameShelf);
+        });
+      });
+
+      el.shelfGrid.querySelectorAll('.shelf-card').forEach(card => {
+        const key = card.dataset.shelfKey;
+        card.addEventListener('click', event => {
+          if (event.target.closest('button')) return;
+          openShelf(key);
+        });
+
+        if (state.reorderMode) {
+          card.addEventListener('dragstart', () => {
+            state.dragShelfKey = key;
+            card.classList.add('dragging');
+          });
+          card.addEventListener('dragend', () => {
+            state.dragShelfKey = null;
+            card.classList.remove('dragging');
+            document.querySelectorAll('.drop-target').forEach(node => node.classList.remove('drop-target'));
+          });
+          card.addEventListener('dragover', event => {
+            event.preventDefault();
+            if (state.dragShelfKey && state.dragShelfKey !== key) card.classList.add('drop-target');
+          });
+          card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
+          card.addEventListener('drop', event => {
+            event.preventDefault();
+            card.classList.remove('drop-target');
+            if (state.dragShelfKey && state.dragShelfKey !== key) {
+              reorderShelves(state.dragShelfKey, key);
+            }
+          });
+        }
+      });
+    }
+
+    function openShelf(shelfKey) {
+      state.selectedShelfKey = shelfKey;
       state.currentScreen = 'shelf';
+      state.filters.productSearch = '';
       el.productSearchInput.value = '';
       render();
     }
 
-    function saveProductInline(id) {
-      const card = el.productList.querySelector(`[data-product-id="${CSS.escape(id)}"]`);
-      const record = state.records.find(r => r._id === id);
+    function renderShelf() {
+      if (!state.selectedOrigin || !state.selectedShelfKey) return;
+      const records = getCurrentShelfRecords();
+      const filtered = state.filters.productSearch.trim().toLowerCase()
+        ? records.filter(record => productMatches(record, state.filters.productSearch.trim().toLowerCase()))
+        : records;
+      const orderedShelves = getOrderedShelvesForCurrentOrigin();
+      const shelfIndex = orderedShelves.findIndex(s => s.key === state.selectedShelfKey);
+      const shelfData = orderedShelves.find(s => s.key === state.selectedShelfKey);
+      const label = shelfData?.label || state.selectedShelfKey;
+
+      el.shelfTitle.textContent = `Scaffale ${label}`;
+      el.shelfMeta.textContent = `${state.selectedOrigin} · ${records.length} prodotti${shelfIndex >= 0 ? ` · ${shelfIndex + 1}/${orderedShelves.length}` : ''}`;
+      el.sidePrevShelfBtn.disabled = shelfIndex <= 0;
+      el.sideNextShelfBtn.disabled = shelfIndex === -1 || shelfIndex >= orderedShelves.length - 1;
+
+      if (!filtered.length) {
+        el.productList.innerHTML = '<div class="empty">Nessun prodotto in questo scaffale.</div>';
+        return;
+      }
+
+      const sorted = [...filtered].sort((a, b) => {
+        const pa = a._parsed || parsePosition(a.posizione);
+        const pb = b._parsed || parsePosition(b.posizione);
+        if (pa.sortLevel !== pb.sortLevel) return pa.sortLevel - pb.sortLevel;
+        return (a.nome || '').localeCompare(b.nome || '', 'it');
+      });
+
+      el.productList.innerHTML = sorted.map(record => renderProductCard(record)).join('');
+      attachProductEvents();
+    }
+
+    function productMatches(record, query) {
+      const fields = [
+        record.codice,
+        record.nome,
+        record.lunghezza,
+        record.larghezza,
+        record.spessore,
+        record.quantita_pz,
+        record.posizione,
+        record._parsed?.level,
+        record.origine
+      ].join(' ').toLowerCase();
+      return fields.includes(query);
+    }
+
+    function renderProductCard(record) {
+      const p = record._parsed || parsePosition(record.posizione);
+      const title = record.nome || '(senza nome)';
+      const dims = [record.lunghezza, record.larghezza, record.spessore].filter(Boolean).join(' × ');
+      const qty = record.quantita_pz || '-';
+      return `
+        <div class="product-card" data-product-id="${escapeHtml(record._id)}">
+          <div class="product-top">
+            <div>
+              <div class="product-title">${escapeHtml(title)}</div>
+              <div class="product-summary" style="margin-top:8px;">
+                <span class="pill">Codice: ${escapeHtml(record.codice || '-')}</span>
+                <span class="pill">Posizione: ${escapeHtml(record.posizione || '-')}</span>
+                <span class="pill">Q.tà: ${escapeHtml(qty)}</span>
+                <span class="pill">Misure: ${escapeHtml(dims || '-')}</span>
+              </div>
+            </div>
+            <div class="ripiano-badge" title="Ripiano">${escapeHtml(p.level || '?')}</div>
+          </div>
+
+          <div class="product-edit">
+            <input class="input full" data-field="nome" value="${escapeHtml(record.nome)}" placeholder="Nome prodotto" />
+            <input class="input" data-field="lunghezza" value="${escapeHtml(record.lunghezza)}" placeholder="Lunghezza" />
+            <input class="input" data-field="larghezza" value="${escapeHtml(record.larghezza)}" placeholder="Larghezza" />
+            <input class="input" data-field="spessore" value="${escapeHtml(record.spessore)}" placeholder="Spessore" />
+            <input class="input" data-field="quantita_pz" value="${escapeHtml(record.quantita_pz)}" placeholder="Quantità" />
+            <input class="input" data-field="codice" value="${escapeHtml(record.codice)}" placeholder="Codice" />
+            <input class="input" data-field="ripiano" value="${escapeHtml(p.level)}" placeholder="Ripiano" />
+            <input class="input full" data-field="posizione" value="${escapeHtml(record.posizione)}" placeholder="Posizione completa" />
+          </div>
+
+          <div class="product-actions">
+            <button class="btn compact primary" data-save-product="${escapeHtml(record._id)}">Salva</button>
+            <button class="btn compact" data-cut-product="${escapeHtml(record._id)}">Taglia</button>
+            <button class="btn compact warning" data-copy-product="${escapeHtml(record._id)}">Copia</button>
+            <button class="btn compact danger" data-delete-product="${escapeHtml(record._id)}">Elimina</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachProductEvents() {
+      el.productList.querySelectorAll('[data-save-product]').forEach(btn => {
+        btn.addEventListener('click', () => saveProductInline(btn.dataset.saveProduct));
+      });
+      el.productList.querySelectorAll('[data-cut-product]').forEach(btn => {
+        btn.addEventListener('click', () => cutProduct(btn.dataset.cutProduct));
+      });
+      el.productList.querySelectorAll('[data-copy-product]').forEach(btn => {
+        btn.addEventListener('click', () => copyProduct(btn.dataset.copyProduct));
+      });
+      el.productList.querySelectorAll('[data-delete-product]').forEach(btn => {
+        btn.addEventListener('click', () => deleteProduct(btn.dataset.deleteProduct));
+      });
+    }
+
+    function saveProductInline(productId) {
+      const card = el.productList.querySelector(`[data-product-id="${CSS.escape(productId)}"]`);
+      const record = state.records.find(r => r._id === productId);
       if (!card || !record) return;
+
       pushHistory();
-      const fields = {};
-      card.querySelectorAll('[data-field]').forEach(input => fields[input.dataset.field] = normalizeText(input.value));
-      record.nome = fields.nome;
-      record.lunghezza = fields.lunghezza;
-      record.larghezza = fields.larghezza;
-      record.spessore = fields.spessore;
-      record.quantita_pz = fields.quantita_pz;
-      record.codice = fields.codice;
-      const parsedPosition = fields.posizione ? parsePosition(fields.posizione) : record._parsed;
-      const base = parsedPosition.type !== 'unknown' ? parsedPosition : record._parsed;
-      record.posizione = buildPosition(base, fields.ripiano || base.level || '1');
+
+      const updates = {};
+      card.querySelectorAll('[data-field]').forEach(input => {
+        updates[input.dataset.field] = normalizeText(input.value);
+      });
+
+      record.nome = updates.nome;
+      record.lunghezza = updates.lunghezza;
+      record.larghezza = updates.larghezza;
+      record.spessore = updates.spessore;
+      record.quantita_pz = updates.quantita_pz;
+      record.codice = updates.codice;
+
+      const oldParsed = record._parsed || parsePosition(record.posizione);
+      const manualLevel = updates.ripiano || oldParsed.level || '1';
+      const typedPosition = formatPosition(updates.posizione);
+      const typedParsed = typedPosition ? parsePosition(typedPosition) : null;
+
+      if (typedPosition && updates.ripiano) {
+        const baseParsed = typedParsed && typedParsed.type !== 'unknown' ? typedParsed : oldParsed;
+        record.posizione = buildPosition(baseParsed, manualLevel);
+      } else if (updates.ripiano) {
+        record.posizione = buildPosition(oldParsed, manualLevel);
+      } else if (typedPosition) {
+        record.posizione = typedPosition;
+      } else {
+        record.posizione = buildPosition(oldParsed, manualLevel);
+      }
+
       record._parsed = parsePosition(record.posizione);
       ensureTimestamp(record);
+
+      // Se cambiando posizione esce dallo scaffale aperto, rendi coerente la vista.
       persist();
       render();
     }
 
-    function attachProductEvents() {
-      el.productList.querySelectorAll('[data-save-product]').forEach(btn => btn.onclick = () => saveProductInline(btn.dataset.saveProduct));
-      el.productList.querySelectorAll('[data-cut-product]').forEach(btn => btn.onclick = () => cutProduct(btn.dataset.cutProduct));
-      el.productList.querySelectorAll('[data-copy-product]').forEach(btn => btn.onclick = () => copyProduct(btn.dataset.copyProduct));
-      el.productList.querySelectorAll('[data-delete-product]').forEach(btn => btn.onclick = () => deleteProduct(btn.dataset.deleteProduct));
-    }
-
-    function copyProduct(id) {
-      const record = state.records.find(r => r._id === id);
+    function copyProduct(productId) {
+      const record = state.records.find(r => r._id === productId);
       if (!record) return;
       pushHistory();
-      state.clipboard.unshift({ mode: 'copy', record: clone(record), sourceOrigin: record.origine, sourcePosition: record.posizione });
+      state.clipboard.unshift({
+        mode: 'copy',
+        record: clone(record),
+        sourceOrigin: record.origine,
+        sourcePosition: record.posizione,
+        copiedAt: nowIso()
+      });
       if (state.clipboard.length > 20) state.clipboard.pop();
-      persist(); renderClipboard();
+      persist();
+      renderClipboard();
     }
 
-    function cutProduct(id) {
-      const index = state.records.findIndex(r => r._id === id);
+    function cutProduct(productId) {
+      const index = state.records.findIndex(r => r._id === productId);
       if (index === -1) return;
       pushHistory();
       const [record] = state.records.splice(index, 1);
-      state.clipboard.unshift({ mode: 'cut', record: clone(record), sourceOrigin: record.origine, sourcePosition: record.posizione });
+      state.clipboard.unshift({
+        mode: 'cut',
+        record: clone(record),
+        sourceOrigin: record.origine,
+        sourcePosition: record.posizione,
+        copiedAt: nowIso()
+      });
       if (state.clipboard.length > 20) state.clipboard.pop();
-      persist(); render();
+      persist();
+      render();
     }
 
-    function deleteProduct(id) {
+    function deleteProduct(productId) {
       if (!confirm('Eliminare questo prodotto?')) return;
       pushHistory();
-      state.records = state.records.filter(r => r._id !== id);
-      persist(); render();
+      state.records = state.records.filter(r => r._id !== productId);
+      persist();
+      render();
     }
 
     function pasteClipboardItem(index) {
-      if (!state.selectedOrigin || !state.selectedShelfKey) return;
+      if (!state.selectedOrigin || !state.selectedShelfKey) {
+        alert('Apri prima uno scaffale.');
+        return;
+      }
       const item = state.clipboard[index];
       if (!item) return;
-      const shelf = getShelvesForOrigin(state.selectedOrigin).find(s => s.key === state.selectedShelfKey);
-      if (!shelf) return;
       pushHistory();
-      const base = shelf.parsed;
+
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const currentShelf = shelves.find(s => s.key === state.selectedShelfKey);
+      const parsed = currentShelf?.parsed || parsePosition(state.selectedShelfKey + '1');
       const originalParsed = item.record._parsed || parsePosition(item.record.posizione);
-      const record = normalizeRecord({ ...clone(item.record), _id: uid(), origine: state.selectedOrigin, posizione: buildPosition(base, originalParsed.level || '1'), created_at: nowIso(), updated_at: nowIso() });
-      state.records.push(record);
-      state.manualShelves = state.manualShelves.filter(s => !(s.origine === state.selectedOrigin && s.key === state.selectedShelfKey));
-      if (item.mode === 'cut') state.clipboard.splice(index, 1);
-      persist(); render();
+      const level = originalParsed.level || '1';
+
+      const newRecord = normalizeRecord({
+        ...clone(item.record),
+        _id: uid(),
+        origine: state.selectedOrigin,
+        posizione: buildPosition({ ...parsed, level }, level)
+      });
+      ensureTimestamp(newRecord, true);
+      state.records.push(newRecord);
+
+      if (item.mode === 'cut') {
+        state.clipboard.splice(index, 1);
+      }
+
+      persist();
+      render();
     }
 
     function pasteAllClipboard() {
-      while (state.clipboard.length) pasteClipboardItem(0);
+      if (!state.clipboard.length) {
+        alert('Nessun prodotto in memoria.');
+        return;
+      }
+      const indexes = state.clipboard.map((_, i) => i);
+      indexes.forEach((_, i) => {
+        if (state.clipboard[0]) pasteClipboardItem(0);
+      });
     }
 
-    function goToAdjacentShelf(direction) {
-      const shelves = getShelvesForOrigin(state.selectedOrigin);
-      const idx = shelves.findIndex(s => s.key === state.selectedShelfKey);
-      const next = idx + direction;
-      if (next < 0 || next >= shelves.length) return;
-      openShelf(shelves[next].key);
+    function renderClipboard() {
+      if (!state.clipboard.length) {
+        el.clipboardBody.innerHTML = '<div class="empty">Nessun prodotto tagliato o copiato.</div>';
+        return;
+      }
+      el.clipboardBody.innerHTML = state.clipboard.map((item, index) => `
+        <div class="clipboard-item">
+          <div>
+            <div><strong>${escapeHtml(item.record.nome || '(senza nome)')}</strong></div>
+            <div class="tiny muted">${escapeHtml(item.mode.toUpperCase())} · da ${escapeHtml(item.sourceOrigin || '-')} · ${escapeHtml(item.sourcePosition || '-')}</div>
+          </div>
+          <button class="btn compact primary" data-paste-index="${index}">Incolla</button>
+          <button class="btn compact ghost" data-remove-clip-index="${index}">×</button>
+        </div>
+      `).join('');
+
+      el.clipboardBody.querySelectorAll('[data-paste-index]').forEach(btn => {
+        btn.addEventListener('click', () => pasteClipboardItem(Number(btn.dataset.pasteIndex)));
+      });
+      el.clipboardBody.querySelectorAll('[data-remove-clip-index]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          pushHistory();
+          state.clipboard.splice(Number(btn.dataset.removeClipIndex), 1);
+          persist();
+          renderClipboard();
+        });
+      });
     }
 
     function reorderShelves(sourceKey, targetKey) {
@@ -953,125 +1422,265 @@
       const sourceShelf = shelves.find(s => s.key === sourceKey);
       const targetShelf = shelves.find(s => s.key === targetKey);
       if (!sourceShelf || !targetShelf) return;
-      if (sourceShelf.parsed.type !== targetShelf.parsed.type) return alert('Formati scaffale diversi.');
-      if (sourceShelf.parsed.type === 'row_shelf_level' && sourceShelf.row !== targetShelf.row) return alert('Riordino consentito solo nella stessa fila.');
-      const sameGroup = shelves.filter(s => sourceShelf.parsed.type === 'row_shelf_level' ? s.row === sourceShelf.row && s.parsed.type === sourceShelf.parsed.type : s.parsed.type === sourceShelf.parsed.type).sort((a,b) => a.parsed.sortShelf - b.parsed.sortShelf);
-      const order = sameGroup.map(s => s.key);
-      const from = order.indexOf(sourceKey);
-      const to = order.indexOf(targetKey);
-      if (from === -1 || to === -1 || from === to) return;
+
+      if (sourceShelf.parsed.type !== targetShelf.parsed.type) {
+        alert('Non posso riordinare scaffali con formati diversi.');
+        return;
+      }
+
+      if (sourceShelf.parsed.type === 'row_shelf_level' && sourceShelf.row !== targetShelf.row) {
+        alert('Per sicurezza, il riordino a catena è limitato alla stessa fila.');
+        return;
+      }
+
+      const sameGroupShelves = shelves.filter(s => {
+        if (sourceShelf.parsed.type === 'row_shelf_level') return s.row === sourceShelf.row && s.parsed.type === sourceShelf.parsed.type;
+        return s.parsed.type === sourceShelf.parsed.type;
+      }).sort((a, b) => a.parsed.sortShelf - b.parsed.sortShelf);
+
+      const orderedKeys = sameGroupShelves.map(s => s.key);
+      const fromIndex = orderedKeys.indexOf(sourceKey);
+      const toIndex = orderedKeys.indexOf(targetKey);
+      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
       pushHistory();
-      order.splice(to, 0, order.splice(from, 1)[0]);
-      const map = new Map();
-      order.forEach((oldKey, i) => {
-        const letter = indexToLetter(i);
-        const oldShelf = sameGroup.find(s => s.key === oldKey);
-        const newKey = sourceShelf.parsed.type === 'row_shelf_level' ? `${oldShelf.row}${letter}` : letter;
-        map.set(oldKey, { newKey, letter });
+
+      orderedKeys.splice(toIndex, 0, orderedKeys.splice(fromIndex, 1)[0]);
+      const renameMap = new Map();
+
+      orderedKeys.forEach((oldKey, index) => {
+        const newLetter = indexToLetter(index);
+        const oldShelf = sameGroupShelves.find(s => s.key === oldKey);
+        const newShelfKey = sourceShelf.parsed.type === 'row_shelf_level'
+          ? `${oldShelf.row}${newLetter}`
+          : newLetter;
+        renameMap.set(oldKey, {
+          oldKey,
+          newShelfKey,
+          newLetter,
+          row: oldShelf.row,
+          type: oldShelf.parsed.type
+        });
       });
-      state.records.forEach(r => {
-        if (r.origine !== state.selectedOrigin) return;
-        const m = map.get(r._parsed.shelfKey);
-        if (!m) return;
-        const p = { ...r._parsed, shelfLetter: m.letter };
-        r.posizione = buildPosition(p, r._parsed.level || '1');
-        r._parsed = parsePosition(r.posizione);
-        ensureTimestamp(r);
+
+      state.records.forEach(record => {
+        if (normalizeOrigin(record.origine) !== state.selectedOrigin) return;
+        const parsed = record._parsed || parsePosition(record.posizione);
+        const mapping = renameMap.get(parsed.shelfKey);
+        if (!mapping) return;
+
+        const tempParsed = { ...parsed, shelfLetter: mapping.newLetter };
+        record.posizione = buildPosition(tempParsed, parsed.level || '1');
+        record._parsed = parsePosition(record.posizione);
+        ensureTimestamp(record);
       });
-      state.manualShelves = state.manualShelves.map(s => {
-        if (s.origine !== state.selectedOrigin) return s;
-        const m = map.get(s.key);
-        return m ? normalizeManualShelf({ ...s, key: m.newKey }) : s;
+
+      state.manualShelves = state.manualShelves.map(shelf => {
+        if (normalizeOrigin(shelf.origine) !== state.selectedOrigin) return shelf;
+        const mapping = renameMap.get(shelf.key);
+        if (!mapping) return shelf;
+        return normalizeManualShelf({ ...shelf, key: mapping.newShelfKey });
       });
-      if (map.has(state.selectedShelfKey)) state.selectedShelfKey = map.get(state.selectedShelfKey).newKey;
-      persist(); render();
+
+      if (state.selectedShelfKey && renameMap.has(state.selectedShelfKey)) {
+        state.selectedShelfKey = renameMap.get(state.selectedShelfKey).newShelfKey;
+      }
+
+      persist();
+      render();
     }
 
-    function promptRenameShelf(currentKey = '') {
+    function promptRenameShelf(prefilledShelfKey = '') {
+      if (!state.selectedOrigin) return;
       const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const current = prefilledShelfKey || state.selectedShelfKey || '';
       const options = shelves.map(s => `<option value="${escapeHtml(s.key)}">${escapeHtml(s.label)}</option>`).join('');
+
       openModal(`
         <h3>Rinomina scaffale</h3>
+        <p class="muted small" style="margin-top:4px;">Aggiorna tutte le posizioni dei prodotti nello scaffale scelto, mantenendo il ripiano invariato.</p>
         <div class="modal-grid">
-          <div class="full"><select id="renameFrom" class="select">${options}</select></div>
-          <div class="full"><input id="renameTo" class="input" placeholder="es. 2g oppure c" /></div>
+          <div class="full">
+            <label class="tiny muted">Scaffale da rinominare</label>
+            <select id="renameFrom" class="select">${options}</select>
+          </div>
+          <div class="full">
+            <label class="tiny muted">Nuovo nome scaffale</label>
+            <input id="renameTo" class="input" placeholder="es. 2g oppure c" />
+          </div>
         </div>
+        <div class="danger-note">Per sicurezza, la rinomina richiede stesso formato dello scaffale attuale. Esempio: 2f → 2g, oppure b → c.</div>
         <div class="row" style="margin-top:14px; justify-content:flex-end;">
           <button class="btn ghost" data-close-modal>Annulla</button>
           <button class="btn primary" id="confirmRenameShelfBtn">Conferma</button>
         </div>
       `, () => {
         const fromEl = document.getElementById('renameFrom');
-        if (currentKey) fromEl.value = currentKey;
-        document.getElementById('confirmRenameShelfBtn').onclick = () => renameShelf(normalizeText(fromEl.value).toLowerCase(), normalizeText(document.getElementById('renameTo').value).toLowerCase());
+        const toEl = document.getElementById('renameTo');
+        if (current) fromEl.value = current;
+        const confirmBtn = document.getElementById('confirmRenameShelfBtn');
+        confirmBtn.addEventListener('click', () => {
+          const from = normalizeText(fromEl.value).toLowerCase();
+          const to = normalizeText(toEl.value).toLowerCase();
+          renameShelf(from, to);
+        });
       });
     }
 
     function renameShelf(fromKey, toKey) {
-      const from = parseShelfKey(fromKey);
-      const to = parseShelfKey(toKey);
-      if (!from || !to) return alert('Formato scaffale non valido.');
-      if (from.type !== to.type) return alert('Formato diverso.');
-      if (from.type === 'row_shelf' && from.row !== to.row) return alert('La fila deve restare la stessa.');
+      if (!fromKey || !toKey) {
+        alert('Inserisci scaffale origine e nuovo nome.');
+        return;
+      }
+      const fromParsed = parseShelfKey(fromKey);
+      const toParsed = parseShelfKey(toKey);
+      if (!fromParsed || !toParsed) {
+        alert('Formato scaffale non valido.');
+        return;
+      }
+      if (fromParsed.type !== toParsed.type) {
+        alert('Il formato del nuovo scaffale deve essere coerente con quello attuale.');
+        return;
+      }
+      if (fromParsed.type === 'row_shelf' && fromParsed.row !== toParsed.row) {
+        alert('Per sicurezza, la rinomina manuale dello scaffale mantiene la stessa fila.');
+        return;
+      }
+
       pushHistory();
       let touched = 0;
-      state.records.forEach(r => {
-        if (r.origine !== state.selectedOrigin || r._parsed.shelfKey !== fromKey) return;
-        const updated = { ...r._parsed, row: to.row, shelfLetter: to.shelfLetter, type: to.type === 'row_shelf' ? 'row_shelf_level' : 'shelf_level' };
-        r.posizione = buildPosition(updated, r._parsed.level || '1');
-        r._parsed = parsePosition(r.posizione);
-        ensureTimestamp(r);
-        touched++;
+      state.records.forEach(record => {
+        if (normalizeOrigin(record.origine) !== state.selectedOrigin) return;
+        const parsed = record._parsed || parsePosition(record.posizione);
+        if (parsed.shelfKey !== fromKey) return;
+        const updatedParsed = {
+          ...parsed,
+          row: toParsed.row,
+          shelfLetter: toParsed.shelfLetter,
+          type: toParsed.type === 'row_shelf' ? 'row_shelf_level' : 'shelf_level',
+          shelfKey: toKey,
+          shelfLabel: toKey
+        };
+        record.posizione = buildPosition(updatedParsed, parsed.level || '1');
+        record._parsed = parsePosition(record.posizione);
+        ensureTimestamp(record);
+        touched += 1;
       });
-      state.manualShelves = state.manualShelves.map(s => {
-        if (s.origine === state.selectedOrigin && s.key === fromKey) { touched++; return normalizeManualShelf({ ...s, key: toKey }); }
-        return s;
+
+      state.manualShelves = state.manualShelves.map(shelf => {
+        if (normalizeOrigin(shelf.origine) !== state.selectedOrigin) return shelf;
+        if (shelf.key !== fromKey) return shelf;
+        touched += 1;
+        return normalizeManualShelf({ ...shelf, key: toKey });
       });
-      if (!touched) { state.history.pop(); return alert('Nessun elemento trovato.'); }
+
+      if (!touched) {
+        state.history.pop();
+        alert('Nessun prodotto trovato in quello scaffale.');
+        return;
+      }
+
       if (state.selectedShelfKey === fromKey) state.selectedShelfKey = toKey;
-      persist(); closeModal(); render();
+      persist();
+      closeModal();
+      render();
     }
 
-    function createShelf(key) {
-      const parsed = parseShelfKey(key);
-      if (!parsed) return alert('Formato scaffale non valido.');
-      if (getShelvesForOrigin(state.selectedOrigin).some(s => s.key === key)) return alert('Scaffale già esistente.');
-      pushHistory();
-      state.manualShelves.push(normalizeManualShelf({ _id: uid(), origine: state.selectedOrigin, key }));
-      persist(); closeModal(); render();
+    function parseShelfKey(key) {
+      const value = normalizeText(key).toLowerCase();
+      const rowShelf = value.match(/^(\d+)([a-z])$/i);
+      if (rowShelf) {
+        return { type: 'row_shelf', row: rowShelf[1], shelfLetter: rowShelf[2].toLowerCase(), shelfKey: value };
+      }
+      const shelf = value.match(/^([a-z])$/i);
+      if (shelf) {
+        return { type: 'shelf', row: '', shelfLetter: shelf[1].toLowerCase(), shelfKey: value };
+      }
+      return null;
     }
 
     function addShelf() {
+      if (!state.selectedOrigin) return;
       const shelves = getShelvesForOrigin(state.selectedOrigin);
-      const first = shelves[0];
+      const guessType = shelves[0]?.parsed?.type === 'row_shelf_level' ? 'row_shelf' : 'shelf';
       let suggested = 'a';
-      if (first && first.parsed.type === 'row_shelf_level') {
-        const targetRow = first.row || '1';
-        const sameRow = shelves.filter(s => s.row === targetRow).sort((a,b) => a.parsed.sortShelf - b.parsed.sortShelf);
-        suggested = `${targetRow}${indexToLetter(sameRow.length)}`;
-      } else if (shelves.length) {
+
+      if (guessType === 'row_shelf') {
+        const rowCounts = new Map();
+        shelves.forEach(s => rowCounts.set(s.row, (rowCounts.get(s.row) || 0) + 1));
+        const targetRow = [...rowCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '1';
+        const sameRow = shelves.filter(s => s.row === targetRow).sort((a, b) => a.parsed.sortShelf - b.parsed.sortShelf);
+        const nextLetter = indexToLetter(sameRow.length);
+        suggested = `${targetRow}${nextLetter}`;
+      } else {
         suggested = indexToLetter(shelves.length);
       }
+
       openModal(`
         <h3>Aggiungi scaffale</h3>
-        <div class="modal-grid"><div class="full"><input id="newShelfKey" class="input" value="${escapeHtml(suggested)}" /></div></div>
-        <div class="row" style="margin-top:14px; justify-content:flex-end;"><button class="btn ghost" data-close-modal>Annulla</button><button class="btn primary" id="confirmAddShelfBtn">Crea</button></div>
+        <p class="muted small" style="margin-top:4px;">Viene creato vuoto. Potrai poi spostarlo o aggiungere prodotti.</p>
+        <div class="modal-grid">
+          <div class="full">
+            <label class="tiny muted">Nome scaffale</label>
+            <input id="newShelfKey" class="input" value="${escapeHtml(suggested)}" />
+          </div>
+          <div class="full">
+            <label class="tiny muted">Ripiano iniziale</label>
+            <input id="newShelfLevel" class="input" value="1" />
+          </div>
+        </div>
+        <div class="note">Per creare uno scaffale visibile, aggiungo un prodotto vuoto incompleto che poi potrai modificare o lasciare incompleto.</div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmAddShelfBtn">Crea</button>
+        </div>
       `, () => {
-        document.getElementById('confirmAddShelfBtn').onclick = () => createShelf(normalizeText(document.getElementById('newShelfKey').value).toLowerCase());
+        document.getElementById('confirmAddShelfBtn').addEventListener('click', () => {
+          const shelfKey = normalizeText(document.getElementById('newShelfKey').value).toLowerCase();
+          const level = normalizeText(document.getElementById('newShelfLevel').value) || '1';
+          createShelfWithPlaceholder(shelfKey, level);
+        });
       });
     }
 
-    function suggestNextLevel() {
-      const records = getCurrentShelfRecords();
-      const max = records.reduce((n, r) => Math.max(n, Number(r._parsed.level || 0)), 0);
-      return String(max || 1);
+    function createShelfWithPlaceholder(shelfKey, level) {
+      const parsedShelf = parseShelfKey(shelfKey);
+      if (!parsedShelf) {
+        alert('Formato scaffale non valido.');
+        return;
+      }
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      if (shelves.some(s => s.key === shelfKey)) {
+        alert('Esiste già uno scaffale con questo nome nell\'origine selezionata.');
+        return;
+      }
+
+      pushHistory();
+      const position = parsedShelf.type === 'row_shelf'
+        ? `${parsedShelf.row}${parsedShelf.shelfLetter}${level}`
+        : `${parsedShelf.shelfLetter}${level}`;
+
+      const manualShelf = normalizeManualShelf({
+        _id: uid(),
+        origine: state.selectedOrigin,
+        key: shelfKey
+      });
+
+      state.manualShelves.push(manualShelf);
+      persist();
+      closeModal();
+      render();
     }
 
     function addProduct() {
+      if (!state.selectedOrigin || !state.selectedShelfKey) return;
       const shelf = getShelvesForOrigin(state.selectedOrigin).find(s => s.key === state.selectedShelfKey);
-      if (!shelf) return alert('Scaffale non valido.');
+      const parsed = shelf?.parsed;
+      const nextLevel = suggestNextLevelForCurrentShelf();
+
       openModal(`
         <h3>Nuovo prodotto</h3>
+        <p class="muted small" style="margin-top:4px;">Puoi lasciarlo anche incompleto e sistemarlo dopo.</p>
         <div class="modal-grid">
           <input id="newNome" class="input full" placeholder="Nome" />
           <input id="newCodice" class="input full" placeholder="Codice" />
@@ -1079,11 +1688,21 @@
           <input id="newLarghezza" class="input" placeholder="Larghezza" />
           <input id="newSpessore" class="input" placeholder="Spessore" />
           <input id="newQuantita" class="input" placeholder="Quantità" />
-          <input id="newRipiano" class="input full" value="${escapeHtml(suggestNextLevel())}" placeholder="Ripiano" />
+          <input id="newRipiano" class="input full" value="${escapeHtml(nextLevel)}" placeholder="Ripiano" />
         </div>
-        <div class="row" style="margin-top:14px; justify-content:flex-end;"><button class="btn ghost" data-close-modal>Annulla</button><button class="btn primary" id="confirmAddProductBtn">Crea</button></div>
+        <div class="note">Lo scaffale rimane ${escapeHtml(state.selectedShelfKey)}. Cambiare ripiano non sposta gli altri prodotti.</div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmAddProductBtn">Aggiungi</button>
+        </div>
       `, () => {
-        document.getElementById('confirmAddProductBtn').onclick = () => {
+        document.getElementById('confirmAddProductBtn').addEventListener('click', () => {
+          pushHistory();
+          const level = normalizeText(document.getElementById('newRipiano').value) || '1';
+          const position = buildPosition(parsed, level);
+          const manualIndex = state.manualShelves.findIndex(s => normalizeOrigin(s.origine) === state.selectedOrigin && s.key === state.selectedShelfKey);
+          if (manualIndex !== -1) state.manualShelves.splice(manualIndex, 1);
+
           const record = normalizeRecord(ensureTimestamp({
             _id: uid(),
             codice: normalizeText(document.getElementById('newCodice').value),
@@ -1091,26 +1710,37 @@
             lunghezza: normalizeText(document.getElementById('newLunghezza').value),
             larghezza: normalizeText(document.getElementById('newLarghezza').value),
             spessore: normalizeText(document.getElementById('newSpessore').value),
-            posizione: buildPosition(shelf.parsed, normalizeText(document.getElementById('newRipiano').value) || '1'),
+            posizione,
             quantita_pz: normalizeText(document.getElementById('newQuantita').value),
             origine: state.selectedOrigin,
             created_at: '',
             updated_at: ''
           }, true));
-          pushHistory();
           state.records.push(record);
-          state.manualShelves = state.manualShelves.filter(s => !(s.origine === state.selectedOrigin && s.key === state.selectedShelfKey));
-          persist(); closeModal(); render();
-        };
+          persist();
+          closeModal();
+          render();
+        });
       });
+    }
+
+    function suggestNextLevelForCurrentShelf() {
+      const records = getCurrentShelfRecords();
+      const max = records.reduce((acc, record) => {
+        const level = Number(record._parsed?.level || 0);
+        return Math.max(acc, isFinite(level) ? level : 0);
+      }, 0);
+      return String(max || 1);
     }
 
     function openModal(content, onReady) {
       el.modalRoot.classList.remove('hidden');
       el.modalRoot.innerHTML = `<div class="modal-backdrop"><div class="modal">${content}</div></div>`;
-      el.modalRoot.querySelectorAll('[data-close-modal]').forEach(btn => btn.onclick = closeModal);
-      el.modalRoot.querySelector('.modal-backdrop').onclick = (e) => { if (e.target.classList.contains('modal-backdrop')) closeModal(); };
-      if (onReady) onReady();
+      el.modalRoot.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeModal));
+      el.modalRoot.querySelector('.modal-backdrop').addEventListener('click', event => {
+        if (event.target.classList.contains('modal-backdrop')) closeModal();
+      });
+      if (typeof onReady === 'function') onReady();
     }
 
     function closeModal() {
@@ -1120,97 +1750,188 @@
 
     function toCsv(records) {
       const headers = ['codice', 'nome', 'lunghezza', 'larghezza', 'spessore', 'posizione', 'quantita_pz', 'origine', 'created_at', 'updated_at'];
-      const lines = [headers.join(',')];
-      records.forEach(r => lines.push(headers.map(h => csvEscape(r[h] ?? '')).join(',')));
-      return lines.join('\n');
+      const rows = [headers.join(',')];
+      records.forEach(record => {
+        const row = headers.map(h => csvEscape(record[h] ?? ''));
+        rows.push(row.join(','));
+      });
+      return rows.join('\n');
     }
 
     function csvEscape(value) {
       const s = String(value ?? '');
-      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
     }
 
     function parseCsv(text) {
       const rows = [];
-      let row = [], value = '', inQuotes = false;
+      let row = [];
+      let value = '';
+      let inQuotes = false;
+
       for (let i = 0; i < text.length; i++) {
-        const char = text[i], next = text[i + 1];
+        const char = text[i];
+        const next = text[i + 1];
+
         if (inQuotes) {
-          if (char === '"' && next === '"') { value += '"'; i++; }
-          else if (char === '"') inQuotes = false;
-          else value += char;
+          if (char === '"' && next === '"') {
+            value += '"';
+            i++;
+          } else if (char === '"') {
+            inQuotes = false;
+          } else {
+            value += char;
+          }
         } else {
-          if (char === '"') inQuotes = true;
-          else if (char === ',') { row.push(value); value = ''; }
-          else if (char === '\n') { row.push(value); rows.push(row); row = []; value = ''; }
-          else if (char !== '\r') value += char;
+          if (char === '"') {
+            inQuotes = true;
+          } else if (char === ',') {
+            row.push(value);
+            value = '';
+          } else if (char === '\n') {
+            row.push(value);
+            rows.push(row);
+            row = [];
+            value = '';
+          } else if (char === '\r') {
+          } else {
+            value += char;
+          }
         }
       }
-      row.push(value); rows.push(row);
+      row.push(value);
+      rows.push(row);
+      if (!rows.length) return [];
+
       const headers = rows[0].map(h => normalizeText(h));
-      return rows.slice(1).filter(r => r.some(c => normalizeText(c) !== '')).map(r => {
+      const dataRows = rows.slice(1).filter(r => r.some(cell => normalizeText(cell) !== ''));
+      return dataRows.map(r => {
         const obj = {};
-        headers.forEach((h, i) => obj[h] = r[i] ?? '');
+        headers.forEach((header, i) => {
+          obj[header] = r[i] ?? '';
+        });
         return normalizeRecord(obj);
       });
     }
 
-    function downloadFile(filename, content, mime) {
+    function downloadFile(filename, content, mime = 'text/plain;charset=utf-8') {
       const blob = new Blob([content], { type: mime });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     }
 
-    function undoLastAction() {
-      const last = state.history.pop();
-      if (!last) return alert('Nessuna operazione da annullare.');
-      state.records = last.records || [];
-      state.manualShelves = last.manualShelves || [];
-      state.clipboard = last.clipboard || [];
-      persist(); render();
+    function downloadSampleCsv() {
+      const sample = [
+        'codice,nome,lunghezza,larghezza,spessore,posizione,quantita_pz,origine,created_at,updated_at',
+        'BAL001,OSB,2500,1250,18,2f1,12,scaffali,2026-03-18T09:00:00.000Z,2026-03-18T09:00:00.000Z',
+        'BAL002,Listellare,3000,1200,20,2f3,4,scaffali,2026-03-18T09:01:00.000Z,2026-03-18T09:01:00.000Z',
+        'BAL003,MDF,2800,2070,19,b2,7,sezionatrice,2026-03-18T09:02:00.000Z,2026-03-18T09:02:00.000Z'
+      ].join('\n');
+      downloadFile('magazzino_esempio.csv', sample, 'text/csv;charset=utf-8');
     }
 
-    el.csvInput.onchange = async (event) => {
+    el.csvInput.addEventListener('change', async event => {
       const file = event.target.files?.[0];
       if (!file) return;
       const text = await file.text();
+      try {
+        const imported = parseCsv(text);
+        pushHistory();
+        state.records = imported;
+        state.clipboard = [];
+        state.selectedOrigin = null;
+        state.selectedShelfKey = null;
+        state.currentScreen = 'home';
+        persist();
+        render();
+      } catch (err) {
+        console.error(err);
+        alert('CSV non valido o non leggibile.');
+      } finally {
+        event.target.value = '';
+      }
+    });
+
+    el.exportBtn.addEventListener('click', () => {
+      const csv = toCsv(state.records);
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+      downloadFile(`magazzino_export_${stamp}.csv`, csv, 'text/csv;charset=utf-8');
+    });
+
+    el.resetBtn.addEventListener('click', () => {
+      if (!confirm('Cancellare archivio locale e memoria prodotti tagliati?')) return;
       pushHistory();
-      state.records = parseCsv(text);
+      state.records = [];
       state.manualShelves = [];
       state.clipboard = [];
       state.selectedOrigin = null;
       state.selectedShelfKey = null;
       state.currentScreen = 'home';
-      persist(); render();
-      event.target.value = '';
-    };
+      persist();
+      render();
+    });
 
-    el.exportBtn.onclick = () => downloadFile(`magazzino_export_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.csv`, toCsv(state.records), 'text/csv;charset=utf-8');
-    el.resetBtn.onclick = () => { if (confirm('Cancellare archivio locale e memoria prodotti tagliati?')) { pushHistory(); state.records = []; state.manualShelves = []; state.clipboard = []; state.selectedOrigin = null; state.selectedShelfKey = null; state.currentScreen = 'home'; persist(); render(); } };
-    el.downloadSampleBtn.onclick = () => downloadFile('magazzino_esempio.csv', ['codice,nome,lunghezza,larghezza,spessore,posizione,quantita_pz,origine,created_at,updated_at','BAL001,OSB,2500,1250,18,2f1,12,scaffali,2026-03-18T09:00:00.000Z,2026-03-18T09:00:00.000Z','BAL002,Listellare,3000,1200,20,2f3,4,scaffali,2026-03-18T09:01:00.000Z,2026-03-18T09:01:00.000Z','BAL003,MDF,2800,2070,19,b2,7,sezionatrice,2026-03-18T09:02:00.000Z,2026-03-18T09:02:00.000Z'].join('\n'), 'text/csv;charset=utf-8');
-    el.backBtn.onclick = () => { state.currentScreen = state.currentScreen === 'shelf' ? 'origin' : 'home'; render(); };
-    el.shelfSearchInput.oninput = () => renderOrigin();
-    el.productSearchInput.oninput = () => renderShelf();
-    el.toggleReorderBtn.onclick = () => { state.reorderMode = !state.reorderMode; renderOrigin(); };
-    el.renameShelfBtn.onclick = () => promptRenameShelf();
-    el.addShelfBtn.onclick = addShelf;
-    el.addProductBtn.onclick = addProduct;
-    el.sidePrevShelfBtn.onclick = () => goToAdjacentShelf(-1);
-    el.sideNextShelfBtn.onclick = () => goToAdjacentShelf(1);
-    el.pasteAllBtn.onclick = pasteAllClipboard;
-    el.saveNowBtn.onclick = () => { persist(); alert('Salvato in locale.'); };
-    el.clearClipboardBtn.onclick = () => { if (!state.clipboard.length) return; pushHistory(); state.clipboard = []; persist(); renderClipboard(); };
+    el.downloadSampleBtn.addEventListener('click', downloadSampleCsv);
+    el.backBtn.addEventListener('click', () => {
+      if (state.currentScreen === 'shelf') {
+        state.currentScreen = 'origin';
+      } else {
+        state.currentScreen = 'home';
+      }
+      render();
+    });
+    el.shelfSearchInput.addEventListener('input', e => {
+      state.filters.shelfSearch = e.target.value;
+      renderOrigin();
+    });
+    el.productSearchInput.addEventListener('input', e => {
+      state.filters.productSearch = e.target.value;
+      renderShelf();
+    });
+    el.toggleReorderBtn.addEventListener('click', () => {
+      state.reorderMode = !state.reorderMode;
+      renderOrigin();
+    });
+    el.renameShelfBtn.addEventListener('click', () => promptRenameShelf());
+    el.addShelfBtn.addEventListener('click', addShelf);
+    el.addProductBtn.addEventListener('click', addProduct);
+    el.sidePrevShelfBtn.addEventListener('click', () => goToAdjacentShelf(-1));
+    el.sideNextShelfBtn.addEventListener('click', () => goToAdjacentShelf(1));
+    el.pasteAllBtn.addEventListener('click', pasteAllClipboard);
+    el.saveNowBtn.addEventListener('click', () => {
+      persist();
+      alert('Salvato in locale.');
+    });
+    el.clearClipboardBtn.addEventListener('click', () => {
+      if (!state.clipboard.length) return;
+      pushHistory();
+      state.clipboard = [];
+      persist();
+      renderClipboard();
+    });
 
-    document.addEventListener('keydown', (event) => {
+    document.addEventListener('keydown', event => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault();
         undoLastAction();
         return;
       }
+
       if (state.currentScreen === 'shelf') {
-        if (event.key === 'ArrowLeft') { event.preventDefault(); goToAdjacentShelf(-1); }
-        if (event.key === 'ArrowRight') { event.preventDefault(); goToAdjacentShelf(1); }
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          goToAdjacentShelf(-1);
+        } else if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          goToAdjacentShelf(1);
+        }
       }
     });
 
