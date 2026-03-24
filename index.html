@@ -1020,15 +1020,20 @@
       el.screenOrigin.classList.toggle('hidden', state.currentScreen !== 'origin');
       el.screenShelf.classList.toggle('hidden', state.currentScreen !== 'shelf');
       el.backBtn.classList.toggle('hidden', state.currentScreen === 'home');
-      el.sidePrevShelfBtn.classList.toggle('hidden', state.currentScreen !== 'shelf');
-      el.sideNextShelfBtn.classList.toggle('hidden', state.currentScreen !== 'shelf');
-      el.sidePrevShelfBtn.style.display = state.currentScreen === 'shelf' ? 'flex' : 'none';
-      el.sideNextShelfBtn.style.display = state.currentScreen === 'shelf' ? 'flex' : 'none';
 
-      if (state.currentScreen === 'home') {
-        el.pageTitle.textContent = 'Magazzino Mobile Offline';
-        el.pageSubtitle.textContent = 'Importa un CSV, lavora in locale, esporta il file aggiornato.';
-      } else if (state.currentScreen === 'origin') {
+      // frecce visibili solo nello scaffale
+      const showSides = state.currentScreen === 'shelf';
+      el.sidePrevShelfBtn.style.display = showSides ? 'flex' : 'none';
+      el.sideNextShelfBtn.style.display = showSides ? 'flex' : 'none';
+
+      // aggiorna stato disabled (IMPORTANTE: evita bug di click morto)
+      if (showSides && state.selectedOrigin && state.selectedShelfKey) {
+        const shelves = getShelvesForOrigin(state.selectedOrigin);
+        const idx = shelves.findIndex(s => s.key === state.selectedShelfKey);
+        el.sidePrevShelfBtn.disabled = idx <= 0;
+        el.sideNextShelfBtn.disabled = idx >= shelves.length - 1;
+      }
+    } else if (state.currentScreen === 'origin') {
         el.pageTitle.textContent = 'Scaffali';
         el.pageSubtitle.textContent = state.selectedOrigin || '';
       } else {
