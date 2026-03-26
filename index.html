@@ -176,16 +176,38 @@
       margin-top: 12px;
     }
 
-    .origin-card, .shelf-card {
+    /* Origin cards: full height to support actions row */
+    .origin-card {
       background: linear-gradient(180deg, #1d2432, #171a21);
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 14px;
       cursor: pointer;
       text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 90px;
     }
 
-    .origin-card .count { margin-top: 8px; font-size: 0.9rem; color: var(--muted); }
+    .origin-card:hover { border-color: var(--accent); }
+
+    .origin-card .count { font-size: 0.9rem; color: var(--muted); }
+
+    /* Badge for manual/temporary origins */
+    .origin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(242,204,96,0.3);
+      background: rgba(242,204,96,0.08);
+      color: var(--warning);
+      margin-top: 4px;
+    }
 
     .toolbar {
       display: grid;
@@ -195,6 +217,12 @@
     }
 
     .shelf-card {
+      background: linear-gradient(180deg, #1d2432, #171a21);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      cursor: pointer;
+      text-align: left;
       min-height: 100px;
       display: flex;
       flex-direction: column;
@@ -339,25 +367,59 @@
       top: 50%;
       transform: translateY(-50%);
       z-index: 55;
-      width: 28px;
-      height: 96px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(17,21,29,0.42);
-      color: rgba(241,245,249,0.92);
-      backdrop-filter: blur(8px);
-      display: none;
+      width: 26px;
+      height: 80px;
+      border: 1px solid rgba(88,166,255,0.18);
+      background: rgba(17,21,29,0.72);
+      color: rgba(241,245,249,0.85);
+      backdrop-filter: blur(10px);
+      display: none;           /* JS sovrascrive con 'flex' — NON usare .hidden qui */
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 4px;
       cursor: pointer;
       user-select: none;
       pointer-events: auto;
-      transition: 0.18s ease;
+      transition: width 0.2s ease, background 0.18s ease, opacity 0.18s ease;
+      padding: 0;
+      font: inherit;
     }
 
-    .side-nav:hover { background: rgba(17,21,29,0.72); }
-    .side-nav:disabled { opacity: 0.28; cursor: default; }
-    .side-nav.left { left: 0; border-left: 0; border-radius: 0 14px 14px 0; }
-    .side-nav.right { right: 0; border-right: 0; border-radius: 14px 0 0 14px; }
+    .side-nav:hover {
+      width: 34px;
+      background: rgba(88,166,255,0.16);
+      border-color: rgba(88,166,255,0.38);
+      color: var(--accent);
+    }
+
+    .side-nav:disabled {
+      opacity: 0.22;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .side-nav.left  { left: 0;  border-left: 0;  border-radius: 0 12px 12px 0; }
+    .side-nav.right { right: 0; border-right: 0; border-radius: 12px 0 0 12px; }
+
+    .side-nav-arrow {
+      font-size: 1.1rem;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .side-nav-label {
+      font-size: 0.55rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      writing-mode: vertical-lr;
+      max-height: 50px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: 0.8;
+    }
 
     .modal-backdrop {
       position: fixed;
@@ -414,8 +476,14 @@
   </style>
 </head>
 <body>
-  <button class="side-nav left hidden" id="sidePrevShelfBtn" aria-label="Scaffale precedente">‹</button>
-  <button class="side-nav right hidden" id="sideNextShelfBtn" aria-label="Scaffale successivo">›</button>
+  <button class="side-nav left" id="sidePrevShelfBtn" aria-label="Scaffale precedente">
+    <span class="side-nav-arrow">‹</span>
+    <span class="side-nav-label" id="sidePrevLabel"></span>
+  </button>
+  <button class="side-nav right" id="sideNextShelfBtn" aria-label="Scaffale successivo">
+    <span class="side-nav-arrow">›</span>
+    <span class="side-nav-label" id="sideNextLabel"></span>
+  </button>
 
   <div class="app">
     <div class="topbar">
@@ -446,7 +514,10 @@
       </div>
 
       <div class="panel">
-        <h2>Origini</h2>
+        <div class="row space-between">
+          <h2>Origini / Capannoni</h2>
+          <button class="btn compact primary" id="addOriginBtn">+ Origine</button>
+        </div>
         <div id="originGrid" class="origin-grid"></div>
       </div>
     </section>
@@ -458,7 +529,7 @@
             <h2 id="originTitle">Origine</h2>
             <p class="muted small" id="originMeta"></p>
           </div>
-          <button class="btn compact ghost" id="toggleReorderBtn">Modalità riordino: OFF</button>
+          <button class="btn compact ghost" id="toggleReorderBtn">Riordino: OFF</button>
         </div>
 
         <div class="toolbar">
@@ -511,11 +582,12 @@
   <div id="modalRoot" class="hidden"></div>
 
   <script>
-    const STORAGE_KEY = 'magazzino_mobile_offline_fixed_v2';
+    const STORAGE_KEY = 'magazzino_mobile_offline_fixed_v3';
 
     const state = {
       records: [],
       manualShelves: [],
+      manualOrigins: [],   // ← NUOVO: origini create manualmente
       clipboard: [],
       currentScreen: 'home',
       selectedOrigin: null,
@@ -541,6 +613,7 @@
       statShelves: document.getElementById('statShelves'),
       statProducts: document.getElementById('statProducts'),
       originGrid: document.getElementById('originGrid'),
+      addOriginBtn: document.getElementById('addOriginBtn'),
       originTitle: document.getElementById('originTitle'),
       originMeta: document.getElementById('originMeta'),
       shelfSearchInput: document.getElementById('shelfSearchInput'),
@@ -560,9 +633,12 @@
       clearClipboardBtn: document.getElementById('clearClipboardBtn'),
       sidePrevShelfBtn: document.getElementById('sidePrevShelfBtn'),
       sideNextShelfBtn: document.getElementById('sideNextShelfBtn'),
+      sidePrevLabel: document.getElementById('sidePrevLabel'),
+      sideNextLabel: document.getElementById('sideNextLabel'),
       modalRoot: document.getElementById('modalRoot')
     };
 
+    /* ── Utilities ── */
     function uid() { return 'r_' + Math.random().toString(36).slice(2, 11) + Date.now().toString(36); }
     function clone(v) { return JSON.parse(JSON.stringify(v)); }
     function normalizeText(v) { return String(v ?? '').trim(); }
@@ -613,23 +689,62 @@
     }
 
     function normalizeRecord(record) {
-      const out = { _id: record._id || uid(), codice: normalizeText(record.codice), nome: normalizeText(record.nome), lunghezza: normalizeText(record.lunghezza), larghezza: normalizeText(record.larghezza), spessore: normalizeText(record.spessore), posizione: normalizeText(record.posizione).toLowerCase(), quantita_pz: normalizeText(record.quantita_pz), origine: normalizeOrigin(record.origine), created_at: normalizeText(record.created_at), updated_at: normalizeText(record.updated_at) };
+      const out = {
+        _id: record._id || uid(),
+        codice: normalizeText(record.codice),
+        nome: normalizeText(record.nome),
+        lunghezza: normalizeText(record.lunghezza),
+        larghezza: normalizeText(record.larghezza),
+        spessore: normalizeText(record.spessore),
+        posizione: normalizeText(record.posizione).toLowerCase(),
+        quantita_pz: normalizeText(record.quantita_pz),
+        origine: normalizeOrigin(record.origine),
+        created_at: normalizeText(record.created_at),
+        updated_at: normalizeText(record.updated_at)
+      };
       out._parsed = parsePosition(out.posizione);
       return out;
     }
 
     function normalizeManualShelf(shelf) {
       const parsed = parseShelfKey(shelf.key);
-      return { _id: shelf._id || uid(), origine: normalizeOrigin(shelf.origine), key: parsed.shelfKey, row: parsed.row, shelfLetter: parsed.shelfLetter, type: parsed.type === 'row_shelf' ? 'row_shelf_level' : 'shelf_level' };
+      return {
+        _id: shelf._id || uid(),
+        origine: normalizeOrigin(shelf.origine),
+        key: parsed.shelfKey,
+        row: parsed.row,
+        shelfLetter: parsed.shelfLetter,
+        type: parsed.type === 'row_shelf' ? 'row_shelf_level' : 'shelf_level'
+      };
     }
 
+    /* ── Normalizza un'origine manuale ── */
+    function normalizeManualOrigin(origin) {
+      return {
+        _id: origin._id || uid(),
+        name: normalizeOrigin(origin.name),
+        createdAt: origin.createdAt || nowIso()
+      };
+    }
+
+    /* ── Persistenza ── */
     function pushHistory() {
-      state.history.push({ records: clone(state.records), manualShelves: clone(state.manualShelves), clipboard: clone(state.clipboard) });
+      state.history.push({
+        records: clone(state.records),
+        manualShelves: clone(state.manualShelves),
+        manualOrigins: clone(state.manualOrigins),
+        clipboard: clone(state.clipboard)
+      });
       if (state.history.length > 30) state.history.shift();
     }
 
     function persist() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ records: state.records, manualShelves: state.manualShelves, clipboard: state.clipboard }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        records: state.records,
+        manualShelves: state.manualShelves,
+        manualOrigins: state.manualOrigins,
+        clipboard: state.clipboard
+      }));
       renderStats();
     }
 
@@ -640,15 +755,40 @@
         const parsed = JSON.parse(raw);
         state.records = Array.isArray(parsed.records) ? parsed.records.map(normalizeRecord) : [];
         state.manualShelves = Array.isArray(parsed.manualShelves) ? parsed.manualShelves.map(normalizeManualShelf) : [];
+        state.manualOrigins = Array.isArray(parsed.manualOrigins) ? parsed.manualOrigins.map(normalizeManualOrigin) : [];
         state.clipboard = Array.isArray(parsed.clipboard) ? parsed.clipboard : [];
       } catch (e) { console.error(e); }
     }
 
+    /* ── Dati derivati ── */
     function getOrigins() {
       const map = new Map();
-      state.records.forEach(r => { const o = normalizeOrigin(r.origine); map.set(o, (map.get(o) || 0) + 1); });
-      state.manualShelves.forEach(s => { const o = normalizeOrigin(s.origine); if (!map.has(o)) map.set(o, 0); });
-      return [...map.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name, 'it'));
+      state.records.forEach(r => {
+        const o = normalizeOrigin(r.origine);
+        map.set(o, (map.get(o) || 0) + 1);
+      });
+      state.manualShelves.forEach(s => {
+        const o = normalizeOrigin(s.origine);
+        if (!map.has(o)) map.set(o, 0);
+      });
+      // Origini manuali: aggiunge quelle non ancora presenti
+      state.manualOrigins.forEach(mo => {
+        if (!map.has(mo.name)) map.set(mo.name, 0);
+      });
+      return [...map.entries()]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'it'));
+    }
+
+    /* Restituisce true se l'origine è stata creata manualmente (e non ha prodotti né scaffali manuali) */
+    function isManualOnlyOrigin(name) {
+      return state.manualOrigins.some(mo => mo.name === name);
+    }
+
+    function isOriginDeletable(name) {
+      const hasRecords = state.records.some(r => r.origine === name);
+      const hasShelves = state.manualShelves.some(s => s.origine === name);
+      return isManualOnlyOrigin(name) && !hasRecords && !hasShelves;
     }
 
     function getRecordsByOrigin(origin) { return state.records.filter(r => r.origine === origin); }
@@ -676,8 +816,12 @@
       return state.records.filter(r => r.origine === state.selectedOrigin && r._parsed.shelfKey === state.selectedShelfKey);
     }
 
+    /* ── Stats ── */
     function renderStats() {
-      const shelves = new Set([...state.records.map(r => `${r.origine}__${r._parsed.shelfKey}`), ...state.manualShelves.map(s => `${s.origine}__${s.key}`)]);
+      const shelves = new Set([
+        ...state.records.map(r => `${r.origine}__${r._parsed.shelfKey}`),
+        ...state.manualShelves.map(s => `${s.origine}__${s.key}`)
+      ]);
       el.statOrigins.textContent = getOrigins().length;
       el.statShelves.textContent = shelves.size;
       el.statProducts.textContent = state.records.length;
@@ -687,14 +831,28 @@
       return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
+    /* ── Layout ── */
     function updateLayout() {
       el.screenHome.classList.toggle('hidden', state.currentScreen !== 'home');
       el.screenOrigin.classList.toggle('hidden', state.currentScreen !== 'origin');
       el.screenShelf.classList.toggle('hidden', state.currentScreen !== 'shelf');
       el.backBtn.classList.toggle('hidden', state.currentScreen === 'home');
+
       const showSides = state.currentScreen === 'shelf';
       el.sidePrevShelfBtn.style.display = showSides ? 'flex' : 'none';
       el.sideNextShelfBtn.style.display = showSides ? 'flex' : 'none';
+
+      // Aggiorna etichette e stato disabled delle frecce laterali
+      if (showSides && state.selectedOrigin && state.selectedShelfKey) {
+        const shelves = getShelvesForOrigin(state.selectedOrigin);
+        const idx = shelves.findIndex(s => s.key === state.selectedShelfKey);
+        const prev = shelves[idx - 1];
+        const next = shelves[idx + 1];
+        el.sidePrevShelfBtn.disabled = !prev;
+        el.sideNextShelfBtn.disabled = !next;
+        el.sidePrevLabel.textContent = prev ? prev.label : '';
+        el.sideNextLabel.textContent = next ? next.label : '';
+      }
 
       if (state.currentScreen === 'home') {
         el.pageTitle.textContent = 'Magazzino Mobile Offline';
@@ -708,16 +866,60 @@
       }
     }
 
+    /* ── Render Home ── */
     function renderHome() {
       const origins = getOrigins();
       if (!origins.length) {
-        el.originGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessun dato caricato.</div>';
+        el.originGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessun dato caricato. Importa un CSV o crea un\'origine manuale.</div>';
         return;
       }
-      el.originGrid.innerHTML = origins.map(o => `<button class="origin-card" data-origin="${escapeHtml(o.name)}"><div><strong>${escapeHtml(o.name)}</strong></div><div class="count">${o.count} prodotti</div></button>`).join('');
-      el.originGrid.querySelectorAll('[data-origin]').forEach(btn => btn.onclick = () => { state.selectedOrigin = btn.dataset.origin; state.currentScreen = 'origin'; state.selectedShelfKey = null; render(); });
+      el.originGrid.innerHTML = origins.map(o => {
+        const isManual = isManualOnlyOrigin(o.name);
+        const isDeletable = isOriginDeletable(o.name);
+        return `<div class="origin-card" data-origin="${escapeHtml(o.name)}">
+          <div>
+            <strong>${escapeHtml(o.name)}</strong>
+            ${isManual ? '<div class="origin-badge">⏳ manuale</div>' : ''}
+            <div class="count" style="margin-top:6px;">${o.count} prodotti</div>
+          </div>
+          <div class="chip-row">
+            <button class="btn compact primary" style="flex:1;" data-open-origin="${escapeHtml(o.name)}">Apri</button>
+            ${isDeletable ? `<button class="btn compact danger" data-delete-origin="${escapeHtml(o.name)}">Elimina</button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+
+      el.originGrid.querySelectorAll('[data-open-origin]').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          state.selectedOrigin = btn.dataset.openOrigin;
+          state.currentScreen = 'origin';
+          state.selectedShelfKey = null;
+          render();
+        };
+      });
+
+      el.originGrid.querySelectorAll('[data-delete-origin]').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          deleteManualOrigin(btn.dataset.deleteOrigin);
+        };
+      });
+
+      // Click sulla card apre l'origine (se non su un button)
+      el.originGrid.querySelectorAll('.origin-card').forEach(card => {
+        card.onclick = (e) => {
+          if (!e.target.closest('button')) {
+            state.selectedOrigin = card.dataset.origin;
+            state.currentScreen = 'origin';
+            state.selectedShelfKey = null;
+            render();
+          }
+        };
+      });
     }
 
+    /* ── Render Origin ── */
     function renderOrigin() {
       if (!state.selectedOrigin) return;
       const shelves = getShelvesForOrigin(state.selectedOrigin);
@@ -726,7 +928,7 @@
       el.originTitle.textContent = state.selectedOrigin;
       el.originMeta.textContent = `${shelves.length} scaffali · ${getRecordsByOrigin(state.selectedOrigin).length} prodotti`;
       el.reorderNote.classList.toggle('hidden', !state.reorderMode);
-      el.toggleReorderBtn.textContent = `Modalità riordino: ${state.reorderMode ? 'ON' : 'OFF'}`;
+      el.toggleReorderBtn.textContent = `Riordino: ${state.reorderMode ? 'ON' : 'OFF'}`;
       if (!filtered.length) {
         el.shelfGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessuno scaffale trovato.</div>';
         return;
@@ -754,6 +956,7 @@
       });
     }
 
+    /* ── Render Shelf ── */
     function renderShelf() {
       if (!state.selectedOrigin || !state.selectedShelfKey) return;
       const shelves = getShelvesForOrigin(state.selectedOrigin);
@@ -800,14 +1003,29 @@
       attachProductEvents();
     }
 
+    /* ── Render Clipboard ── */
     function renderClipboard() {
       if (!state.clipboard.length) {
         el.clipboardBody.innerHTML = '<div class="empty">Nessun prodotto tagliato o copiato.</div>';
         return;
       }
-      el.clipboardBody.innerHTML = state.clipboard.map((item, i) => `<div class="clipboard-item"><div><div><strong>${escapeHtml(item.record.nome || '(senza nome)')}</strong></div><div class="tiny muted">${escapeHtml(item.mode.toUpperCase())} · ${escapeHtml(item.sourceOrigin)} · ${escapeHtml(item.sourcePosition)}</div></div><button class="btn compact primary" data-paste-index="${i}">Incolla</button><button class="btn compact ghost" data-remove-clip-index="${i}">×</button></div>`).join('');
+      el.clipboardBody.innerHTML = state.clipboard.map((item, i) =>
+        `<div class="clipboard-item">
+          <div>
+            <div><strong>${escapeHtml(item.record.nome || '(senza nome)')}</strong></div>
+            <div class="tiny muted">${escapeHtml(item.mode.toUpperCase())} · ${escapeHtml(item.sourceOrigin)} · ${escapeHtml(item.sourcePosition)}</div>
+          </div>
+          <button class="btn compact primary" data-paste-index="${i}">Incolla</button>
+          <button class="btn compact ghost" data-remove-clip-index="${i}">×</button>
+        </div>`
+      ).join('');
       el.clipboardBody.querySelectorAll('[data-paste-index]').forEach(btn => btn.onclick = () => pasteClipboardItem(Number(btn.dataset.pasteIndex)));
-      el.clipboardBody.querySelectorAll('[data-remove-clip-index]').forEach(btn => btn.onclick = () => { pushHistory(); state.clipboard.splice(Number(btn.dataset.removeClipIndex), 1); persist(); renderClipboard(); });
+      el.clipboardBody.querySelectorAll('[data-remove-clip-index]').forEach(btn => btn.onclick = () => {
+        pushHistory();
+        state.clipboard.splice(Number(btn.dataset.removeClipIndex), 1);
+        persist();
+        renderClipboard();
+      });
     }
 
     function render() {
@@ -819,6 +1037,7 @@
       updateLayout();
     }
 
+    /* ── Navigazione ── */
     function openShelf(key) {
       state.selectedShelfKey = key;
       state.currentScreen = 'shelf';
@@ -826,6 +1045,15 @@
       render();
     }
 
+    function goToAdjacentShelf(direction) {
+      const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const idx = shelves.findIndex(s => s.key === state.selectedShelfKey);
+      const next = idx + direction;
+      if (next < 0 || next >= shelves.length) return;
+      openShelf(shelves[next].key);
+    }
+
+    /* ── Prodotti ── */
     function saveProductInline(id) {
       const card = el.productList.querySelector(`[data-product-id="${CSS.escape(id)}"]`);
       const record = state.records.find(r => r._id === id);
@@ -893,9 +1121,17 @@
       pushHistory();
       const base = shelf.parsed;
       const originalParsed = item.record._parsed || parsePosition(item.record.posizione);
-      const record = normalizeRecord({ ...clone(item.record), _id: uid(), origine: state.selectedOrigin, posizione: buildPosition(base, originalParsed.level || '1'), created_at: nowIso(), updated_at: nowIso() });
+      const record = normalizeRecord({
+        ...clone(item.record),
+        _id: uid(),
+        origine: state.selectedOrigin,
+        posizione: buildPosition(base, originalParsed.level || '1'),
+        created_at: nowIso(),
+        updated_at: nowIso()
+      });
       state.records.push(record);
       state.manualShelves = state.manualShelves.filter(s => !(s.origine === state.selectedOrigin && s.key === state.selectedShelfKey));
+      // Se destinazione era un'origine manuale vuota, ora ha prodotti → non servono più
       if (item.mode === 'cut') state.clipboard.splice(index, 1);
       persist();
       render();
@@ -903,14 +1139,49 @@
 
     function pasteAllClipboard() { while (state.clipboard.length) pasteClipboardItem(0); }
 
-    function goToAdjacentShelf(direction) {
-      const shelves = getShelvesForOrigin(state.selectedOrigin);
-      const idx = shelves.findIndex(s => s.key === state.selectedShelfKey);
-      const next = idx + direction;
-      if (next < 0 || next >= shelves.length) return;
-      openShelf(shelves[next].key);
+    /* ── Origini manuali ── */
+    function addOrigin() {
+      openModal(`
+        <h3>Nuova origine / capannone</h3>
+        <p class="muted small" style="margin-top:6px;">Puoi creare un'area anche senza prodotti, per prepararla prima dell'import.</p>
+        <div class="modal-grid">
+          <div class="full">
+            <input id="newOriginName" class="input" placeholder="es. temporanee, capannone_b, reso" autocomplete="off" />
+          </div>
+        </div>
+        <div class="note" style="margin-top:10px;">Il nome deve essere unico. Usa lettere, numeri e underscore.</div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmAddOriginBtn">Crea origine</button>
+        </div>
+      `, () => {
+        const input = document.getElementById('newOriginName');
+        input.focus();
+        document.getElementById('confirmAddOriginBtn').onclick = () => {
+          const name = normalizeOrigin(input.value);
+          if (!name || name === 'senza_origine') return alert('Nome origine non valido.');
+          if (getOrigins().some(o => o.name === name)) return alert('Origine già esistente.');
+          pushHistory();
+          state.manualOrigins.push(normalizeManualOrigin({ name }));
+          persist();
+          closeModal();
+          render();
+        };
+        // Enter per confermare
+        input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('confirmAddOriginBtn').click(); };
+      });
     }
 
+    function deleteManualOrigin(name) {
+      if (!isOriginDeletable(name)) return alert('Impossibile eliminare: l\'origine contiene prodotti o scaffali.');
+      if (!confirm(`Eliminare l'origine "${name}"?`)) return;
+      pushHistory();
+      state.manualOrigins = state.manualOrigins.filter(mo => mo.name !== name);
+      persist();
+      render();
+    }
+
+    /* ── Scaffali ── */
     function reorderShelves(sourceKey, targetKey) {
       const shelves = getShelvesForOrigin(state.selectedOrigin);
       const sourceShelf = shelves.find(s => s.key === sourceKey);
@@ -960,11 +1231,15 @@
           <div class="full"><select id="renameFrom" class="select">${options}</select></div>
           <div class="full"><input id="renameTo" class="input" placeholder="es. 2g oppure c" /></div>
         </div>
-        <div class="row" style="margin-top:14px; justify-content:flex-end;"><button class="btn ghost" data-close-modal>Annulla</button><button class="btn primary" id="confirmRenameShelfBtn">Conferma</button></div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmRenameShelfBtn">Conferma</button>
+        </div>
       `, () => {
         const fromEl = document.getElementById('renameFrom');
         if (currentKey) fromEl.value = currentKey;
-        document.getElementById('confirmRenameShelfBtn').onclick = () => renameShelf(normalizeText(fromEl.value).toLowerCase(), normalizeText(document.getElementById('renameTo').value).toLowerCase());
+        document.getElementById('confirmRenameShelfBtn').onclick = () =>
+          renameShelf(normalizeText(fromEl.value).toLowerCase(), normalizeText(document.getElementById('renameTo').value).toLowerCase());
       });
     }
 
@@ -1015,13 +1290,20 @@
       }
       openModal(`
         <h3>Aggiungi scaffale</h3>
-        <div class="modal-grid"><div class="full"><input id="newShelfKey" class="input" value="${escapeHtml(suggested)}" /></div></div>
-        <div class="row" style="margin-top:14px; justify-content:flex-end;"><button class="btn ghost" data-close-modal>Annulla</button><button class="btn primary" id="confirmAddShelfBtn">Crea</button></div>
+        <div class="modal-grid">
+          <div class="full"><input id="newShelfKey" class="input" value="${escapeHtml(suggested)}" /></div>
+        </div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmAddShelfBtn">Crea</button>
+        </div>
       `, () => {
-        document.getElementById('confirmAddShelfBtn').onclick = () => createShelf(normalizeText(document.getElementById('newShelfKey').value).toLowerCase());
+        document.getElementById('confirmAddShelfBtn').onclick = () =>
+          createShelf(normalizeText(document.getElementById('newShelfKey').value).toLowerCase());
       });
     }
 
+    /* ── Prodotto: aggiunta ── */
     function suggestNextLevel() {
       const records = getCurrentShelfRecords();
       const max = records.reduce((n, r) => Math.max(n, Number(r._parsed.level || 0)), 0);
@@ -1042,8 +1324,12 @@
           <input id="newQuantita" class="input" placeholder="Quantità" />
           <input id="newRipiano" class="input full" value="${escapeHtml(suggestNextLevel())}" placeholder="Ripiano" />
         </div>
-        <div class="row" style="margin-top:14px; justify-content:flex-end;"><button class="btn ghost" data-close-modal>Annulla</button><button class="btn primary" id="confirmAddProductBtn">Crea</button></div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn ghost" data-close-modal>Annulla</button>
+          <button class="btn primary" id="confirmAddProductBtn">Crea</button>
+        </div>
       `, () => {
+        document.getElementById('newNome').focus();
         document.getElementById('confirmAddProductBtn').onclick = () => {
           const record = normalizeRecord(ensureTimestamp({
             _id: uid(),
@@ -1066,6 +1352,7 @@
       });
     }
 
+    /* ── Modal ── */
     function openModal(content, onReady) {
       el.modalRoot.classList.remove('hidden');
       el.modalRoot.innerHTML = `<div class="modal-backdrop"><div class="modal">${content}</div></div>`;
@@ -1079,6 +1366,7 @@
       el.modalRoot.innerHTML = '';
     }
 
+    /* ── CSV ── */
     function toCsv(records) {
       const headers = ['codice', 'nome', 'lunghezza', 'larghezza', 'spessore', 'posizione', 'quantita_pz', 'origine', 'created_at', 'updated_at'];
       const lines = [headers.join(',')];
@@ -1123,33 +1411,65 @@
       a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
 
+    /* ── Undo ── */
     function undoLastAction() {
       const last = state.history.pop();
       if (!last) return alert('Nessuna operazione da annullare.');
       state.records = last.records || [];
       state.manualShelves = last.manualShelves || [];
+      state.manualOrigins = last.manualOrigins || [];
       state.clipboard = last.clipboard || [];
       persist(); render();
     }
 
+    /* ── Event listeners ── */
     el.csvInput.onchange = async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
       const text = await file.text();
       pushHistory();
-      state.records = parseCsv(text);
+      const imported = parseCsv(text);
+      // Le origini nell'import vengono aggiunte automaticamente; le origini manuali preesistenti restano
+      state.records = imported;
       state.manualShelves = [];
-      state.clipboard = [];
       state.selectedOrigin = null;
       state.selectedShelfKey = null;
       state.currentScreen = 'home';
+      // Rimuovi origini manuali che ora hanno prodotti (sono diventate "reali")
+      const importedOriginNames = new Set(imported.map(r => r.origine));
+      state.manualOrigins = state.manualOrigins.filter(mo => !importedOriginNames.has(mo.name));
       persist(); render();
       event.target.value = '';
     };
 
-    el.exportBtn.onclick = () => downloadFile(`magazzino_export_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.csv`, toCsv(state.records), 'text/csv;charset=utf-8');
-    el.resetBtn.onclick = () => { if (confirm('Cancellare archivio locale e memoria prodotti tagliati?')) { pushHistory(); state.records = []; state.manualShelves = []; state.clipboard = []; state.selectedOrigin = null; state.selectedShelfKey = null; state.currentScreen = 'home'; persist(); render(); } };
-    el.downloadSampleBtn.onclick = () => downloadFile('magazzino_esempio.csv', ['codice,nome,lunghezza,larghezza,spessore,posizione,quantita_pz,origine,created_at,updated_at','BAL001,OSB,2500,1250,18,2f1,12,scaffali,2026-03-18T09:00:00.000Z,2026-03-18T09:00:00.000Z','BAL002,Listellare,3000,1200,20,2f3,4,scaffali,2026-03-18T09:01:00.000Z,2026-03-18T09:01:00.000Z','BAL003,MDF,2800,2070,19,b2,7,sezionatrice,2026-03-18T09:02:00.000Z,2026-03-18T09:02:00.000Z'].join('\n'), 'text/csv;charset=utf-8');
+    el.exportBtn.onclick = () => downloadFile(
+      `magazzino_export_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.csv`,
+      toCsv(state.records),
+      'text/csv;charset=utf-8'
+    );
+
+    el.resetBtn.onclick = () => {
+      if (confirm('Cancellare archivio locale, origini manuali e clipboard?')) {
+        pushHistory();
+        state.records = [];
+        state.manualShelves = [];
+        state.manualOrigins = [];
+        state.clipboard = [];
+        state.selectedOrigin = null;
+        state.selectedShelfKey = null;
+        state.currentScreen = 'home';
+        persist(); render();
+      }
+    };
+
+    el.downloadSampleBtn.onclick = () => downloadFile('magazzino_esempio.csv', [
+      'codice,nome,lunghezza,larghezza,spessore,posizione,quantita_pz,origine,created_at,updated_at',
+      'BAL001,OSB,2500,1250,18,2f1,12,scaffali,2026-03-18T09:00:00.000Z,2026-03-18T09:00:00.000Z',
+      'BAL002,Listellare,3000,1200,20,2f3,4,scaffali,2026-03-18T09:01:00.000Z,2026-03-18T09:01:00.000Z',
+      'BAL003,MDF,2800,2070,19,b2,7,sezionatrice,2026-03-18T09:02:00.000Z,2026-03-18T09:02:00.000Z'
+    ].join('\n'), 'text/csv;charset=utf-8');
+
+    el.addOriginBtn.onclick = addOrigin;
     el.backBtn.onclick = () => { state.currentScreen = state.currentScreen === 'shelf' ? 'origin' : 'home'; render(); };
     el.shelfSearchInput.oninput = () => renderOrigin();
     el.productSearchInput.oninput = () => renderShelf();
