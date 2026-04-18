@@ -1379,7 +1379,12 @@
       el.modalRoot.classList.remove('hidden');
       el.modalRoot.innerHTML = `<div class="modal-backdrop"><div class="modal">${content}</div></div>`;
       el.modalRoot.querySelectorAll('[data-close-modal]').forEach(btn => btn.onclick = closeModal);
-      el.modalRoot.querySelector('.modal-backdrop').onclick = (e) => { if (e.target.classList.contains('modal-backdrop')) closeModal(); };
+      // Chiusura SOLO via pulsanti espliciti (niente tap-sul-backdrop, causava chiusure accidentali su mobile)
+      const modalInner = el.modalRoot.querySelector('.modal');
+      if (modalInner) {
+        modalInner.onclick = (e) => e.stopPropagation();
+        modalInner.ontouchstart = (e) => e.stopPropagation();
+      }
       if (onReady) onReady();
     }
     function closeModal() {
