@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Magazzino Mobile Offline</title>
+  <title>Magazzino Mobile — Supabase</title>
   <style>
     :root {
       --bg: #0f1115;
@@ -23,33 +23,19 @@
 
     * { box-sizing: border-box; }
     html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      min-height: 100%;
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: var(--font); min-height: 100%;
     }
+    body { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
 
-    body {
-      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-    }
-
-    .app {
-      width: 100%;
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 14px 14px 260px;
-    }
+    .app { width: 100%; max-width: 760px; margin: 0 auto; padding: 14px 14px 260px; }
 
     .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 30;
+      position: sticky; top: 0; z-index: 30;
       background: linear-gradient(180deg, rgba(15,17,21,0.98), rgba(15,17,21,0.90));
       backdrop-filter: blur(10px);
-      padding: 10px 0 12px;
-      margin-bottom: 12px;
+      padding: 10px 0 12px; margin-bottom: 12px;
     }
 
     h1, h2, h3, h4, p { margin: 0; }
@@ -62,13 +48,7 @@
     .small { font-size: 0.92rem; }
     .hidden { display: none !important; }
 
-    .row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .space-between { justify-content: space-between; }
 
     .panel {
@@ -78,7 +58,6 @@
       box-shadow: var(--shadow);
       padding: 14px;
     }
-
     .panel + .panel { margin-top: 12px; }
 
     .btn, .icon-btn, .select, .input {
@@ -90,208 +69,116 @@
     }
 
     .btn, .icon-btn {
-      padding: 11px 14px;
-      cursor: pointer;
-      transition: 0.18s ease;
-      min-height: 44px;
+      padding: 11px 14px; cursor: pointer;
+      transition: 0.18s ease; min-height: 44px;
     }
-
     .btn:hover, .icon-btn:hover { transform: translateY(-1px); }
     .btn:active, .icon-btn:active { transform: translateY(0); }
     .btn:disabled, .icon-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 
-    .btn.primary {
-      background: var(--accent);
-      color: #08121f;
-      border-color: transparent;
-      font-weight: 700;
-    }
-
-    .btn.success {
-      background: var(--accent-2);
-      color: #0b1a0e;
-      border-color: transparent;
-      font-weight: 700;
-    }
-
-    .btn.danger {
-      background: rgba(255,123,114,0.14);
-      color: var(--danger);
-      border-color: rgba(255,123,114,0.25);
-    }
-
-    .btn.warning {
-      background: rgba(242,204,96,0.14);
-      color: var(--warning);
-      border-color: rgba(242,204,96,0.25);
-    }
-
+    .btn.primary { background: var(--accent); color: #08121f; border-color: transparent; font-weight: 700; }
+    .btn.success { background: var(--accent-2); color: #0b1a0e; border-color: transparent; font-weight: 700; }
+    .btn.danger  { background: rgba(255,123,114,0.14); color: var(--danger);  border-color: rgba(255,123,114,0.25); }
+    .btn.warning { background: rgba(242,204,96,0.14); color: var(--warning); border-color: rgba(242,204,96,0.25); }
     .btn.ghost, .icon-btn { background: var(--panel-2); }
 
     .btn.compact, .icon-btn.compact {
-      padding: 8px 10px;
-      min-height: 38px;
-      border-radius: 12px;
-      font-size: 0.92rem;
+      padding: 8px 10px; min-height: 38px;
+      border-radius: 12px; font-size: 0.92rem;
     }
 
-    .input, .select {
-      width: 100%;
-      padding: 12px 13px;
-      min-height: 46px;
-      outline: none;
-    }
+    .input, .select { width: 100%; padding: 12px 13px; min-height: 46px; outline: none; }
 
     .header-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
+      gap: 10px; margin-top: 12px;
     }
 
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 12px;
+      gap: 10px; margin-top: 12px;
     }
-
-    .stat {
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px;
-    }
-
-    .stat .n {
-      font-weight: 800;
-      font-size: 1.15rem;
-      margin-top: 4px;
-    }
+    .stat { background: var(--panel-2); border: 1px solid var(--border); border-radius: 16px; padding: 12px; }
+    .stat .n { font-weight: 800; font-size: 1.15rem; margin-top: 4px; }
 
     .origin-grid, .shelf-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 12px;
+      gap: 10px; margin-top: 12px;
     }
 
-    /* Origin cards: full height to support actions row */
     .origin-card {
       background: linear-gradient(180deg, #1d2432, #171a21);
       border: 1px solid var(--border);
       border-radius: 18px;
-      padding: 14px;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
-      min-height: 90px;
+      padding: 14px; cursor: pointer; text-align: left;
+      display: flex; flex-direction: column; justify-content: space-between;
+      gap: 10px; min-height: 90px;
     }
-
     .origin-card:hover { border-color: var(--accent); }
-
     .origin-card .count { font-size: 0.9rem; color: var(--muted); }
 
-    /* Badge for manual/temporary origins */
     .origin-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.75rem;
-      padding: 3px 8px;
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.75rem; padding: 3px 8px;
       border-radius: 999px;
       border: 1px solid rgba(242,204,96,0.3);
       background: rgba(242,204,96,0.08);
-      color: var(--warning);
-      margin-top: 4px;
+      color: var(--warning); margin-top: 4px;
     }
 
     .toolbar {
       display: grid;
       grid-template-columns: 1fr auto auto;
-      gap: 8px;
-      margin-top: 10px;
+      gap: 8px; margin-top: 10px;
     }
 
     .shelf-card {
       background: linear-gradient(180deg, #1d2432, #171a21);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px;
-      cursor: pointer;
-      text-align: left;
-      min-height: 100px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      border-radius: 18px; padding: 14px;
+      cursor: pointer; text-align: left; min-height: 100px;
+      display: flex; flex-direction: column; justify-content: space-between;
       gap: 10px;
     }
-
     .shelf-card.dragging { opacity: 0.35; }
     .shelf-card.drop-target { outline: 2px dashed var(--accent); outline-offset: -4px; }
     .shelf-title { font-size: 1.3rem; font-weight: 800; letter-spacing: 0.02em; }
 
     .chip-row, .product-summary { display: flex; gap: 8px; flex-wrap: wrap; }
-
     .chip, .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--muted);
-      font-size: 0.83rem;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 10px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--panel-2);
+      color: var(--muted); font-size: 0.83rem;
     }
 
-    .product-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 12px;
-    }
+    .product-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
 
     .product-card {
       background: linear-gradient(180deg, #1c2130, #151922);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      border-radius: 18px; padding: 12px;
+      display: flex; flex-direction: column; gap: 10px;
     }
+    .product-card.pending { border-color: rgba(242,204,96,0.5); }
 
     .product-top {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: start;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 8px; align-items: start;
     }
-
     .product-title { font-size: 1rem; font-weight: 700; word-break: break-word; }
 
     .ripiano-badge {
-      min-width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      background: rgba(88,166,255,0.14);
-      color: var(--accent);
-      border: 1px solid rgba(88,166,255,0.26);
-      font-weight: 800;
+      min-width: 42px; height: 42px;
+      border-radius: 14px; display: grid; place-items: center;
+      background: rgba(88,166,255,0.14); color: var(--accent);
+      border: 1px solid rgba(88,166,255,0.26); font-weight: 800;
     }
 
-    .product-edit {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
+    .product-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .product-edit .full { grid-column: 1 / -1; }
 
     .product-actions {
@@ -301,10 +188,7 @@
     }
 
     .bottom-sheet {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      position: fixed; left: 0; right: 0; bottom: 0;
       z-index: 40;
       padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
       background: linear-gradient(180deg, rgba(15,17,21,0.04), rgba(15,17,21,0.82) 28%, rgba(15,17,21,0.96));
@@ -313,162 +197,139 @@
     }
 
     .clipboard {
-      max-width: 760px;
-      margin: 0 auto;
-      border-radius: 22px;
-      border: 1px solid var(--border);
+      max-width: 760px; margin: 0 auto;
+      border-radius: 22px; border: 1px solid var(--border);
       background: rgba(17,21,29,0.94);
       box-shadow: var(--shadow);
-      overflow: hidden;
-      pointer-events: auto;
+      overflow: hidden; pointer-events: auto;
       max-height: 220px;
     }
-
     .clipboard-head {
       padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; border-bottom: 1px solid var(--border);
     }
-
     .clipboard-body {
-      max-height: 140px;
-      overflow: auto;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      max-height: 140px; overflow: auto; padding: 10px;
+      display: flex; flex-direction: column; gap: 8px;
     }
-
     .clipboard-item {
       background: var(--panel-2);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 10px;
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 8px;
-      align-items: center;
+      border-radius: 14px; padding: 10px;
+      display: grid; grid-template-columns: 1fr auto auto;
+      gap: 8px; align-items: center;
     }
 
     .empty {
-      padding: 16px;
-      text-align: center;
-      color: var(--muted);
+      padding: 16px; text-align: center; color: var(--muted);
       border: 1px dashed var(--border);
       border-radius: 18px;
       background: rgba(255,255,255,0.02);
     }
 
     .side-nav {
-      position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 55;
-      width: 26px;
-      height: 80px;
+      position: fixed; top: 50%; transform: translateY(-50%);
+      z-index: 55; width: 26px; height: 80px;
       border: 1px solid rgba(88,166,255,0.18);
       background: rgba(17,21,29,0.72);
       color: rgba(241,245,249,0.85);
       backdrop-filter: blur(10px);
-      display: none;           /* JS sovrascrive con 'flex' — NON usare .hidden qui */
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      cursor: pointer;
-      user-select: none;
-      pointer-events: auto;
+      display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; cursor: pointer; user-select: none; pointer-events: auto;
       transition: width 0.2s ease, background 0.18s ease, opacity 0.18s ease;
-      padding: 0;
-      font: inherit;
+      padding: 0; font: inherit;
     }
-
     .side-nav:hover {
       width: 34px;
       background: rgba(88,166,255,0.16);
       border-color: rgba(88,166,255,0.38);
       color: var(--accent);
     }
-
-    .side-nav:disabled {
-      opacity: 0.22;
-      cursor: default;
-      pointer-events: none;
-    }
-
+    .side-nav:disabled { opacity: 0.22; cursor: default; pointer-events: none; }
     .side-nav.left  { left: 0;  border-left: 0;  border-radius: 0 12px 12px 0; }
     .side-nav.right { right: 0; border-right: 0; border-radius: 12px 0 0 12px; }
-
-    .side-nav-arrow {
-      font-size: 1.1rem;
-      line-height: 1;
-      font-weight: 700;
-    }
-
+    .side-nav-arrow { font-size: 1.1rem; line-height: 1; font-weight: 700; }
     .side-nav-label {
-      font-size: 0.55rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--muted);
-      writing-mode: vertical-lr;
-      max-height: 50px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      opacity: 0.8;
+      font-size: 0.55rem; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--muted);
+      writing-mode: vertical-lr; max-height: 50px;
+      overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; opacity: 0.8;
     }
 
     .modal-backdrop {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(0,0,0,0.55);
       z-index: 90;
-      display: grid;
-      place-items: center;
-      padding: 14px;
+      display: grid; place-items: center; padding: 14px;
     }
-
     .modal {
-      width: 100%;
-      max-width: 560px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 16px;
+      width: 100%; max-width: 560px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 24px; padding: 16px;
       box-shadow: var(--shadow);
-      max-height: 90vh;
-      overflow: auto;
+      max-height: 90vh; overflow: auto;
     }
-
-    .modal-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
     .modal-grid .full { grid-column: 1 / -1; }
 
     .note {
-      margin-top: 8px;
-      padding: 10px 12px;
+      margin-top: 8px; padding: 10px 12px;
       border-radius: 14px;
       background: rgba(88,166,255,0.08);
       border: 1px solid rgba(88,166,255,0.18);
       color: #cfe6ff;
     }
+    .note.warn {
+      background: rgba(242,204,96,0.08);
+      border-color: rgba(242,204,96,0.22);
+      color: #fdecc0;
+    }
+    .note pre { margin: 6px 0 0; white-space: pre-wrap; font-size: 0.78rem; opacity: 0.85; }
+
+    /* Sync status bar */
+    .sync-bar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px; align-items: center;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      margin-top: 10px;
+    }
+    .sync-dot {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+      background: var(--muted);
+    }
+    .sync-dot.online   { background: var(--accent-2); box-shadow: 0 0 6px rgba(126,231,135,0.6); }
+    .sync-dot.offline  { background: var(--danger); }
+    .sync-dot.pending  { background: var(--warning); }
+    .sync-dot.syncing  { background: var(--accent); animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%     { opacity: 0.35; }
+    }
+
+    .pending-marker {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--warning);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
 
     @media (max-width: 520px) {
-      .origin-grid,
-      .shelf-grid,
-      .stats,
-      .product-edit,
-      .modal-grid,
-      .header-actions,
-      .product-actions {
+      .origin-grid, .shelf-grid, .stats, .product-edit, .modal-grid,
+      .header-actions, .product-actions {
         grid-template-columns: 1fr 1fr;
       }
       .toolbar { grid-template-columns: 1fr; }
@@ -489,8 +350,8 @@
     <div class="topbar">
       <div class="row space-between">
         <div>
-          <h1 id="pageTitle">Magazzino Mobile Offline</h1>
-          <p class="muted small" id="pageSubtitle">Importa un CSV, lavora in locale, esporta il file aggiornato.</p>
+          <h1 id="pageTitle">Magazzino Mobile</h1>
+          <p class="muted small" id="pageSubtitle">Supabase · offline-first</p>
         </div>
         <button class="icon-btn compact hidden" id="backBtn">← Indietro</button>
       </div>
@@ -498,12 +359,20 @@
 
     <section id="screenHome">
       <div class="panel">
+        <div class="sync-bar">
+          <div>
+            <span class="sync-dot" id="syncDot"></span>
+            <strong id="syncStatus">—</strong>
+            <div class="tiny muted" id="syncDetails">Configura Supabase per iniziare.</div>
+          </div>
+          <button class="btn compact primary" id="syncBtn">Sync</button>
+        </div>
+
         <div class="header-actions">
-          <label class="btn primary" for="csvInput">Importa CSV</label>
-          <input id="csvInput" type="file" accept=".csv,text/csv" class="hidden" />
-          <button class="btn success" id="exportBtn">Esporta CSV</button>
-          <button class="btn ghost" id="resetBtn">Svuota archivio</button>
-          <button class="btn ghost" id="downloadSampleBtn">CSV esempio</button>
+          <button class="btn ghost" id="configBtn">Configura Supabase</button>
+          <button class="btn ghost" id="exportBtn">Esporta CSV (backup)</button>
+          <button class="btn ghost" id="resetBtn">Svuota cache locale</button>
+          <button class="btn ghost" id="helpBtn">Guida SQL</button>
         </div>
 
         <div class="stats">
@@ -581,21 +450,31 @@
 
   <div id="modalRoot" class="hidden"></div>
 
-  <script>
-    const STORAGE_KEY = 'magazzino_mobile_offline_fixed_v3';
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const STORAGE_KEY = 'magazzino_supabase_v1';
+    const CONFIG_KEY  = 'magazzino_supabase_config_v1';
 
     const state = {
       records: [],
       manualShelves: [],
-      manualOrigins: [],   // ← NUOVO: origini create manualmente
+      manualOrigins: [],
       clipboard: [],
+      pendingDeletes: [],      // [ "COD1", "COD2", ... ] codici da cancellare dal DB
       currentScreen: 'home',
       selectedOrigin: null,
       selectedShelfKey: null,
       reorderMode: false,
       dragShelfKey: null,
       filters: { shelfSearch: '', productSearch: '' },
-      history: []
+      history: [],
+      config: null,            // { url, anonKey, table }
+      supabase: null,
+      online: navigator.onLine,
+      syncing: false,
+      lastSyncAt: null,
+      lastSyncError: null
     };
 
     const el = {
@@ -605,10 +484,16 @@
       screenHome: document.getElementById('screenHome'),
       screenOrigin: document.getElementById('screenOrigin'),
       screenShelf: document.getElementById('screenShelf'),
-      csvInput: document.getElementById('csvInput'),
+
+      syncDot: document.getElementById('syncDot'),
+      syncStatus: document.getElementById('syncStatus'),
+      syncDetails: document.getElementById('syncDetails'),
+      syncBtn: document.getElementById('syncBtn'),
+      configBtn: document.getElementById('configBtn'),
       exportBtn: document.getElementById('exportBtn'),
       resetBtn: document.getElementById('resetBtn'),
-      downloadSampleBtn: document.getElementById('downloadSampleBtn'),
+      helpBtn: document.getElementById('helpBtn'),
+
       statOrigins: document.getElementById('statOrigins'),
       statShelves: document.getElementById('statShelves'),
       statProducts: document.getElementById('statProducts'),
@@ -655,7 +540,6 @@
       if (!letter) return 999;
       return letter.toLowerCase().charCodeAt(0) - 97;
     }
-
     function indexToLetter(index) {
       return String.fromCharCode(97 + Math.max(0, Number(index) || 0));
     }
@@ -691,6 +575,8 @@
     function normalizeRecord(record) {
       const out = {
         _id: record._id || uid(),
+        _pendingOp: record._pendingOp || null,       // 'upsert' | null
+        _remoteCodice: record._remoteCodice ?? null, // il codice con cui il record è noto al server (null se mai syncato)
         codice: normalizeText(record.codice),
         nome: normalizeText(record.nome),
         lunghezza: normalizeText(record.lunghezza),
@@ -718,7 +604,6 @@
       };
     }
 
-    /* ── Normalizza un'origine manuale ── */
     function normalizeManualOrigin(origin) {
       return {
         _id: origin._id || uid(),
@@ -727,13 +612,25 @@
       };
     }
 
+    function markPending(record) {
+      record._pendingOp = 'upsert';
+      return record;
+    }
+
+    function schedulePendingDelete(codice) {
+      const c = normalizeText(codice);
+      if (!c) return;
+      if (!state.pendingDeletes.includes(c)) state.pendingDeletes.push(c);
+    }
+
     /* ── Persistenza ── */
     function pushHistory() {
       state.history.push({
         records: clone(state.records),
         manualShelves: clone(state.manualShelves),
         manualOrigins: clone(state.manualOrigins),
-        clipboard: clone(state.clipboard)
+        clipboard: clone(state.clipboard),
+        pendingDeletes: clone(state.pendingDeletes)
       });
       if (state.history.length > 30) state.history.shift();
     }
@@ -743,9 +640,12 @@
         records: state.records,
         manualShelves: state.manualShelves,
         manualOrigins: state.manualOrigins,
-        clipboard: state.clipboard
+        clipboard: state.clipboard,
+        pendingDeletes: state.pendingDeletes,
+        lastSyncAt: state.lastSyncAt
       }));
       renderStats();
+      renderSyncBar();
     }
 
     function restore() {
@@ -757,7 +657,30 @@
         state.manualShelves = Array.isArray(parsed.manualShelves) ? parsed.manualShelves.map(normalizeManualShelf) : [];
         state.manualOrigins = Array.isArray(parsed.manualOrigins) ? parsed.manualOrigins.map(normalizeManualOrigin) : [];
         state.clipboard = Array.isArray(parsed.clipboard) ? parsed.clipboard : [];
+        state.pendingDeletes = Array.isArray(parsed.pendingDeletes) ? parsed.pendingDeletes : [];
+        state.lastSyncAt = parsed.lastSyncAt || null;
       } catch (e) { console.error(e); }
+    }
+
+    function persistConfig() {
+      if (state.config) localStorage.setItem(CONFIG_KEY, JSON.stringify(state.config));
+      else localStorage.removeItem(CONFIG_KEY);
+    }
+
+    function restoreConfig() {
+      const raw = localStorage.getItem(CONFIG_KEY);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.url && parsed?.anonKey && parsed?.table) state.config = parsed;
+      } catch (e) { console.error(e); }
+    }
+
+    function buildSupabaseClient() {
+      if (!state.config) { state.supabase = null; return; }
+      state.supabase = createClient(state.config.url, state.config.anonKey, {
+        auth: { persistSession: false }
+      });
     }
 
     /* ── Dati derivati ── */
@@ -771,7 +694,6 @@
         const o = normalizeOrigin(s.origine);
         if (!map.has(o)) map.set(o, 0);
       });
-      // Origini manuali: aggiunge quelle non ancora presenti
       state.manualOrigins.forEach(mo => {
         if (!map.has(mo.name)) map.set(mo.name, 0);
       });
@@ -780,17 +702,14 @@
         .sort((a, b) => a.name.localeCompare(b.name, 'it'));
     }
 
-    /* Restituisce true se l'origine è stata creata manualmente (e non ha prodotti né scaffali manuali) */
     function isManualOnlyOrigin(name) {
       return state.manualOrigins.some(mo => mo.name === name);
     }
-
     function isOriginDeletable(name) {
       const hasRecords = state.records.some(r => r.origine === name);
       const hasShelves = state.manualShelves.some(s => s.origine === name);
       return isManualOnlyOrigin(name) && !hasRecords && !hasShelves;
     }
-
     function getRecordsByOrigin(origin) { return state.records.filter(r => r.origine === origin); }
 
     function getShelvesForOrigin(origin) {
@@ -816,7 +735,11 @@
       return state.records.filter(r => r.origine === state.selectedOrigin && r._parsed.shelfKey === state.selectedShelfKey);
     }
 
-    /* ── Stats ── */
+    function pendingUpsertsCount() {
+      return state.records.filter(r => r._pendingOp === 'upsert').length;
+    }
+
+    /* ── Stats + Sync bar ── */
     function renderStats() {
       const shelves = new Set([
         ...state.records.map(r => `${r.origine}__${r._parsed.shelfKey}`),
@@ -825,6 +748,59 @@
       el.statOrigins.textContent = getOrigins().length;
       el.statShelves.textContent = shelves.size;
       el.statProducts.textContent = state.records.length;
+    }
+
+    function renderSyncBar() {
+      const pendingUp = pendingUpsertsCount();
+      const pendingDel = state.pendingDeletes.length;
+      const totPending = pendingUp + pendingDel;
+
+      if (!state.config) {
+        el.syncDot.className = 'sync-dot';
+        el.syncStatus.textContent = 'Non configurato';
+        el.syncDetails.textContent = 'Tocca "Configura Supabase" per collegare il database.';
+        el.syncBtn.disabled = true;
+        return;
+      }
+      if (state.syncing) {
+        el.syncDot.className = 'sync-dot syncing';
+        el.syncStatus.textContent = 'Sincronizzazione…';
+        el.syncDetails.textContent = 'Invio modifiche e aggiornamento dati.';
+        el.syncBtn.disabled = true;
+        return;
+      }
+      if (!state.online) {
+        el.syncDot.className = 'sync-dot offline';
+        el.syncStatus.textContent = 'Offline';
+        el.syncDetails.textContent = totPending ? `${totPending} modifiche in coda, verranno inviate al ripristino.` : 'Le modifiche locali restano in cache.';
+        el.syncBtn.disabled = true;
+        return;
+      }
+      if (totPending > 0) {
+        el.syncDot.className = 'sync-dot pending';
+        el.syncStatus.textContent = `${totPending} modifiche in coda`;
+        el.syncDetails.textContent = state.lastSyncAt ? `Ultimo sync: ${formatDate(state.lastSyncAt)}` : 'Mai sincronizzato.';
+        el.syncBtn.disabled = false;
+        return;
+      }
+      if (state.lastSyncError) {
+        el.syncDot.className = 'sync-dot offline';
+        el.syncStatus.textContent = 'Errore ultimo sync';
+        el.syncDetails.textContent = state.lastSyncError;
+        el.syncBtn.disabled = false;
+        return;
+      }
+      el.syncDot.className = 'sync-dot online';
+      el.syncStatus.textContent = 'Sincronizzato';
+      el.syncDetails.textContent = state.lastSyncAt ? `Ultimo sync: ${formatDate(state.lastSyncAt)}` : 'Premi Sync per scaricare i dati.';
+      el.syncBtn.disabled = false;
+    }
+
+    function formatDate(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      } catch { return iso; }
     }
 
     function escapeHtml(str) {
@@ -842,7 +818,6 @@
       el.sidePrevShelfBtn.style.display = showSides ? 'flex' : 'none';
       el.sideNextShelfBtn.style.display = showSides ? 'flex' : 'none';
 
-      // Aggiorna etichette e stato disabled delle frecce laterali
       if (showSides && state.selectedOrigin && state.selectedShelfKey) {
         const shelves = getShelvesForOrigin(state.selectedOrigin);
         const idx = shelves.findIndex(s => s.key === state.selectedShelfKey);
@@ -855,8 +830,8 @@
       }
 
       if (state.currentScreen === 'home') {
-        el.pageTitle.textContent = 'Magazzino Mobile Offline';
-        el.pageSubtitle.textContent = 'Importa un CSV, lavora in locale, esporta il file aggiornato.';
+        el.pageTitle.textContent = 'Magazzino Mobile';
+        el.pageSubtitle.textContent = state.config ? `Supabase · ${state.config.table}` : 'Supabase · non configurato';
       } else if (state.currentScreen === 'origin') {
         el.pageTitle.textContent = 'Scaffali';
         el.pageSubtitle.textContent = state.selectedOrigin || '';
@@ -870,7 +845,7 @@
     function renderHome() {
       const origins = getOrigins();
       if (!origins.length) {
-        el.originGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessun dato caricato. Importa un CSV o crea un\'origine manuale.</div>';
+        el.originGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessun dato. Premi <strong>Sync</strong> per scaricare dal DB oppure crea un\'origine manuale.</div>';
         return;
       }
       el.originGrid.innerHTML = origins.map(o => {
@@ -898,15 +873,9 @@
           render();
         };
       });
-
       el.originGrid.querySelectorAll('[data-delete-origin]').forEach(btn => {
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          deleteManualOrigin(btn.dataset.deleteOrigin);
-        };
+        btn.onclick = (e) => { e.stopPropagation(); deleteManualOrigin(btn.dataset.deleteOrigin); };
       });
-
-      // Click sulla card apre l'origine (se non su un button)
       el.originGrid.querySelectorAll('.origin-card').forEach(card => {
         card.onclick = (e) => {
           if (!e.target.closest('button')) {
@@ -977,9 +946,13 @@
       const sorted = [...filtered].sort((a, b) => a._parsed.sortLevel - b._parsed.sortLevel || a.nome.localeCompare(b.nome, 'it'));
       el.productList.innerHTML = sorted.map(r => {
         const p = r._parsed;
-        return `<div class="product-card" data-product-id="${escapeHtml(r._id)}">
+        const pending = r._pendingOp === 'upsert';
+        return `<div class="product-card${pending ? ' pending' : ''}" data-product-id="${escapeHtml(r._id)}">
           <div class="product-top">
-            <div><div class="product-title">${escapeHtml(r.nome || '(senza nome)')}</div><div class="product-summary" style="margin-top:8px;"><span class="pill">Codice: ${escapeHtml(r.codice || '-')}</span><span class="pill">Posizione: ${escapeHtml(r.posizione || '-')}</span><span class="pill">Q.tà: ${escapeHtml(r.quantita_pz || '-')}</span></div></div>
+            <div>
+              <div class="product-title">${escapeHtml(r.nome || '(senza nome)')}${pending ? '<span class="pending-marker" title="Non ancora sincronizzato"></span>' : ''}</div>
+              <div class="product-summary" style="margin-top:8px;"><span class="pill">Codice: ${escapeHtml(r.codice || '-')}</span><span class="pill">Posizione: ${escapeHtml(r.posizione || '-')}</span><span class="pill">Q.tà: ${escapeHtml(r.quantita_pz || '-')}</span></div>
+            </div>
             <div class="ripiano-badge">${escapeHtml(p.level || '?')}</div>
           </div>
           <div class="product-edit">
@@ -988,7 +961,7 @@
             <input class="input" data-field="larghezza" value="${escapeHtml(r.larghezza)}" placeholder="Larghezza" />
             <input class="input" data-field="spessore" value="${escapeHtml(r.spessore)}" placeholder="Spessore" />
             <input class="input" data-field="quantita_pz" value="${escapeHtml(r.quantita_pz)}" placeholder="Quantità" />
-            <input class="input" data-field="codice" value="${escapeHtml(r.codice)}" placeholder="Codice" />
+            <input class="input" data-field="codice" value="${escapeHtml(r.codice)}" placeholder="Codice (PK)" />
             <input class="input" data-field="ripiano" value="${escapeHtml(p.level)}" placeholder="Ripiano" />
             <input class="input full" data-field="posizione" value="${escapeHtml(r.posizione)}" placeholder="Posizione completa" />
           </div>
@@ -1030,6 +1003,7 @@
 
     function render() {
       renderStats();
+      renderSyncBar();
       renderHome();
       renderOrigin();
       renderShelf();
@@ -1044,7 +1018,6 @@
       el.productSearchInput.value = '';
       render();
     }
-
     function goToAdjacentShelf(direction) {
       const shelves = getShelvesForOrigin(state.selectedOrigin);
       const idx = shelves.findIndex(s => s.key === state.selectedShelfKey);
@@ -1061,17 +1034,33 @@
       pushHistory();
       const fields = {};
       card.querySelectorAll('[data-field]').forEach(input => fields[input.dataset.field] = normalizeText(input.value));
+
+      const newCodice = fields.codice;
+      if (!newCodice) { alert('Il codice è obbligatorio (è la PK nel DB).'); state.history.pop(); return; }
+
+      // Se è cambiato il codice → controlla duplicato
+      if (newCodice !== record.codice) {
+        const conflict = state.records.some(r => r._id !== record._id && r.codice === newCodice);
+        if (conflict) { alert(`Esiste già un prodotto con codice "${newCodice}".`); state.history.pop(); return; }
+        // Il vecchio codice remoto va cancellato al prossimo sync
+        if (record._remoteCodice && record._remoteCodice !== newCodice) {
+          schedulePendingDelete(record._remoteCodice);
+        }
+      }
+
       record.nome = fields.nome;
       record.lunghezza = fields.lunghezza;
       record.larghezza = fields.larghezza;
       record.spessore = fields.spessore;
       record.quantita_pz = fields.quantita_pz;
-      record.codice = fields.codice;
+      record.codice = newCodice;
+
       const parsedPosition = fields.posizione ? parsePosition(fields.posizione) : record._parsed;
       const base = parsedPosition.type !== 'unknown' ? parsedPosition : record._parsed;
       record.posizione = buildPosition(base, fields.ripiano || base.level || '1');
       record._parsed = parsePosition(record.posizione);
       ensureTimestamp(record);
+      markPending(record);
       persist();
       render();
     }
@@ -1100,13 +1089,17 @@
       const [record] = state.records.splice(index, 1);
       state.clipboard.unshift({ mode: 'cut', record: clone(record), sourceOrigin: record.origine, sourcePosition: record.posizione });
       if (state.clipboard.length > 20) state.clipboard.pop();
+      // Nota: il record è solo tolto dalla UI. Non schedulo delete finché non viene incollato altrove,
+      // perché "taglia" → spostamento. Se la persona svuota la clipboard, schedulo delete lì.
       persist();
       render();
     }
 
     function deleteProduct(id) {
-      if (!confirm('Eliminare questo prodotto?')) return;
+      if (!confirm('Eliminare questo prodotto? (Verrà rimosso anche dal DB al prossimo sync)')) return;
       pushHistory();
+      const record = state.records.find(r => r._id === id);
+      if (record && record._remoteCodice) schedulePendingDelete(record._remoteCodice);
       state.records = state.records.filter(r => r._id !== id);
       persist();
       render();
@@ -1121,18 +1114,42 @@
       pushHistory();
       const base = shelf.parsed;
       const originalParsed = item.record._parsed || parsePosition(item.record.posizione);
-      const record = normalizeRecord({
-        ...clone(item.record),
-        _id: uid(),
-        origine: state.selectedOrigin,
-        posizione: buildPosition(base, originalParsed.level || '1'),
-        created_at: nowIso(),
-        updated_at: nowIso()
-      });
-      state.records.push(record);
+
+      if (item.mode === 'cut') {
+        // Ripristino del record con nuova posizione/origine, mantenendo codice (PK)
+        const record = normalizeRecord({
+          ...clone(item.record),
+          origine: state.selectedOrigin,
+          posizione: buildPosition(base, originalParsed.level || '1'),
+          updated_at: nowIso()
+        });
+        markPending(record);
+        state.records.push(record);
+        state.clipboard.splice(index, 1);
+      } else {
+        // Copia → nuovo codice obbligatorio (PK univoca)
+        const baseCode = item.record.codice || 'COPY';
+        let suggested = `${baseCode}-2`;
+        let n = 2;
+        while (state.records.some(r => r.codice === suggested)) { n++; suggested = `${baseCode}-${n}`; }
+        const newCodice = prompt(`Inserisci un NUOVO codice per la copia (il codice è la PK e deve essere univoco):`, suggested);
+        if (!newCodice) { state.history.pop(); return; }
+        if (state.records.some(r => r.codice === newCodice.trim())) { alert('Codice già esistente.'); state.history.pop(); return; }
+        const record = normalizeRecord({
+          ...clone(item.record),
+          _id: uid(),
+          _remoteCodice: null,    // nuovo record, mai syncato
+          codice: newCodice.trim(),
+          origine: state.selectedOrigin,
+          posizione: buildPosition(base, originalParsed.level || '1'),
+          created_at: nowIso(),
+          updated_at: nowIso()
+        });
+        markPending(record);
+        state.records.push(record);
+      }
+
       state.manualShelves = state.manualShelves.filter(s => !(s.origine === state.selectedOrigin && s.key === state.selectedShelfKey));
-      // Se destinazione era un'origine manuale vuota, ora ha prodotti → non servono più
-      if (item.mode === 'cut') state.clipboard.splice(index, 1);
       persist();
       render();
     }
@@ -1143,13 +1160,12 @@
     function addOrigin() {
       openModal(`
         <h3>Nuova origine / capannone</h3>
-        <p class="muted small" style="margin-top:6px;">Puoi creare un'area anche senza prodotti, per prepararla prima dell'import.</p>
+        <p class="muted small" style="margin-top:6px;">L'origine esiste solo come "area vuota" finché non ci metti prodotti. Non viene salvata sul DB.</p>
         <div class="modal-grid">
           <div class="full">
             <input id="newOriginName" class="input" placeholder="es. temporanee, capannone_b, reso" autocomplete="off" />
           </div>
         </div>
-        <div class="note" style="margin-top:10px;">Il nome deve essere unico. Usa lettere, numeri e underscore.</div>
         <div class="row" style="margin-top:14px; justify-content:flex-end;">
           <button class="btn ghost" data-close-modal>Annulla</button>
           <button class="btn primary" id="confirmAddOriginBtn">Crea origine</button>
@@ -1167,7 +1183,6 @@
           closeModal();
           render();
         };
-        // Enter per confermare
         input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('confirmAddOriginBtn').click(); };
       });
     }
@@ -1211,6 +1226,7 @@
         r.posizione = buildPosition(p, r._parsed.level || '1');
         r._parsed = parsePosition(r.posizione);
         ensureTimestamp(r);
+        markPending(r);
       });
       state.manualShelves = state.manualShelves.map(s => {
         if (s.origine !== state.selectedOrigin) return s;
@@ -1257,6 +1273,7 @@
         r.posizione = buildPosition(updated, r._parsed.level || '1');
         r._parsed = parsePosition(r.posizione);
         ensureTimestamp(r);
+        markPending(r);
         touched++;
       });
       state.manualShelves = state.manualShelves.map(s => {
@@ -1316,8 +1333,8 @@
       openModal(`
         <h3>Nuovo prodotto</h3>
         <div class="modal-grid">
+          <input id="newCodice" class="input full" placeholder="Codice (PK, obbligatorio)" />
           <input id="newNome" class="input full" placeholder="Nome" />
-          <input id="newCodice" class="input full" placeholder="Codice" />
           <input id="newLunghezza" class="input" placeholder="Lunghezza" />
           <input id="newLarghezza" class="input" placeholder="Larghezza" />
           <input id="newSpessore" class="input" placeholder="Spessore" />
@@ -1329,11 +1346,15 @@
           <button class="btn primary" id="confirmAddProductBtn">Crea</button>
         </div>
       `, () => {
-        document.getElementById('newNome').focus();
+        document.getElementById('newCodice').focus();
         document.getElementById('confirmAddProductBtn').onclick = () => {
+          const codice = normalizeText(document.getElementById('newCodice').value);
+          if (!codice) return alert('Il codice è obbligatorio.');
+          if (state.records.some(r => r.codice === codice)) return alert(`Codice "${codice}" già esistente.`);
           const record = normalizeRecord(ensureTimestamp({
             _id: uid(),
-            codice: normalizeText(document.getElementById('newCodice').value),
+            _remoteCodice: null,
+            codice,
             nome: normalizeText(document.getElementById('newNome').value),
             lunghezza: normalizeText(document.getElementById('newLunghezza').value),
             larghezza: normalizeText(document.getElementById('newLarghezza').value),
@@ -1344,6 +1365,7 @@
             created_at: '',
             updated_at: ''
           }, true));
+          markPending(record);
           pushHistory();
           state.records.push(record);
           state.manualShelves = state.manualShelves.filter(s => !(s.origine === state.selectedOrigin && s.key === state.selectedShelfKey));
@@ -1360,50 +1382,22 @@
       el.modalRoot.querySelector('.modal-backdrop').onclick = (e) => { if (e.target.classList.contains('modal-backdrop')) closeModal(); };
       if (onReady) onReady();
     }
-
     function closeModal() {
       el.modalRoot.classList.add('hidden');
       el.modalRoot.innerHTML = '';
     }
 
-    /* ── CSV ── */
+    /* ── CSV Export (solo backup) ── */
     function toCsv(records) {
       const headers = ['codice', 'nome', 'lunghezza', 'larghezza', 'spessore', 'posizione', 'quantita_pz', 'origine', 'created_at', 'updated_at'];
       const lines = [headers.join(',')];
       records.forEach(r => lines.push(headers.map(h => csvEscape(r[h] ?? '')).join(',')));
       return lines.join('\n');
     }
-
     function csvEscape(value) {
       const s = String(value ?? '');
       return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     }
-
-    function parseCsv(text) {
-      const rows = [];
-      let row = [], value = '', inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const char = text[i], next = text[i + 1];
-        if (inQuotes) {
-          if (char === '"' && next === '"') { value += '"'; i++; }
-          else if (char === '"') inQuotes = false;
-          else value += char;
-        } else {
-          if (char === '"') inQuotes = true;
-          else if (char === ',') { row.push(value); value = ''; }
-          else if (char === '\n') { row.push(value); rows.push(row); row = []; value = ''; }
-          else if (char !== '\r') value += char;
-        }
-      }
-      row.push(value); rows.push(row);
-      const headers = rows[0].map(h => normalizeText(h));
-      return rows.slice(1).filter(r => r.some(c => normalizeText(c) !== '')).map(r => {
-        const obj = {};
-        headers.forEach((h, i) => obj[h] = r[i] ?? '');
-        return normalizeRecord(obj);
-      });
-    }
-
     function downloadFile(filename, content, mime) {
       const blob = new Blob([content], { type: mime });
       const url = URL.createObjectURL(blob);
@@ -1415,59 +1409,203 @@
     function undoLastAction() {
       const last = state.history.pop();
       if (!last) return alert('Nessuna operazione da annullare.');
-      state.records = last.records || [];
-      state.manualShelves = last.manualShelves || [];
-      state.manualOrigins = last.manualOrigins || [];
+      state.records = (last.records || []).map(normalizeRecord);
+      state.manualShelves = (last.manualShelves || []).map(normalizeManualShelf);
+      state.manualOrigins = (last.manualOrigins || []).map(normalizeManualOrigin);
       state.clipboard = last.clipboard || [];
+      state.pendingDeletes = last.pendingDeletes || [];
       persist(); render();
     }
 
+    /* ── Config Supabase ── */
+    function openConfigModal() {
+      const cfg = state.config || { url: '', anonKey: '', table: 'magazzino' };
+      openModal(`
+        <h3>Configura Supabase</h3>
+        <p class="muted small" style="margin-top:6px;">I dati restano salvati solo su questo dispositivo (localStorage).</p>
+        <div class="modal-grid">
+          <div class="full"><input id="cfgUrl" class="input" placeholder="https://xxx.supabase.co" value="${escapeHtml(cfg.url)}" /></div>
+          <div class="full"><input id="cfgKey" class="input" placeholder="anon public key (eyJ...)" value="${escapeHtml(cfg.anonKey)}" /></div>
+          <div class="full"><input id="cfgTable" class="input" placeholder="Nome tabella" value="${escapeHtml(cfg.table)}" /></div>
+        </div>
+        <div class="note warn" style="margin-top:12px;">
+          <strong>Attenzione:</strong> la anon key è visibile nel browser. Per proteggere i dati, attiva <em>Row Level Security</em> sulla tabella e definisci le policy con <strong>USING (true)</strong> per le operazioni che ti servono. Esempio in fondo (pulsante "Guida SQL").
+        </div>
+        <div class="row" style="margin-top:14px; justify-content:space-between;">
+          <button class="btn ghost" id="cfgClearBtn">Rimuovi configurazione</button>
+          <div class="row">
+            <button class="btn ghost" data-close-modal>Annulla</button>
+            <button class="btn primary" id="cfgSaveBtn">Salva e testa</button>
+          </div>
+        </div>
+        <div id="cfgTestMsg" class="tiny muted" style="margin-top:10px;"></div>
+      `, () => {
+        document.getElementById('cfgClearBtn').onclick = () => {
+          if (!confirm('Rimuovere configurazione Supabase?')) return;
+          state.config = null;
+          state.supabase = null;
+          persistConfig();
+          closeModal(); render();
+        };
+        document.getElementById('cfgSaveBtn').onclick = async () => {
+          const url = normalizeText(document.getElementById('cfgUrl').value);
+          const anonKey = normalizeText(document.getElementById('cfgKey').value);
+          const table = normalizeText(document.getElementById('cfgTable').value) || 'magazzino';
+          if (!url || !anonKey) return alert('URL e anon key sono obbligatori.');
+          state.config = { url, anonKey, table };
+          persistConfig();
+          buildSupabaseClient();
+          const msgEl = document.getElementById('cfgTestMsg');
+          msgEl.textContent = 'Test connessione…';
+          try {
+            const { error } = await state.supabase.from(table).select('codice').limit(1);
+            if (error) throw error;
+            msgEl.textContent = '✅ Connessione OK.';
+            setTimeout(() => { closeModal(); render(); }, 600);
+          } catch (err) {
+            msgEl.textContent = '❌ ' + (err.message || 'Errore sconosciuto');
+            msgEl.style.color = 'var(--danger)';
+          }
+          render();
+        };
+      });
+    }
+
+    function openHelpModal() {
+      openModal(`
+        <h3>Guida SQL — Tabella &amp; policy</h3>
+        <p class="muted small" style="margin-top:6px;">Usa queste query nell'editor SQL di Supabase (una volta, già creato il progetto).</p>
+        <div class="note">
+          <strong>1) Schema della tabella</strong>
+          <pre>create table if not exists magazzino (
+  codice text primary key,
+  nome text,
+  lunghezza text,
+  larghezza text,
+  spessore text,
+  posizione text,
+  quantita_pz text,
+  origine text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);</pre>
+        </div>
+        <div class="note warn">
+          <strong>2) RLS + policy anon (app senza login)</strong>
+          <pre>alter table magazzino enable row level security;
+
+create policy "anon_full_access"
+  on magazzino for all
+  to anon
+  using (true)
+  with check (true);</pre>
+          Così la anon key può leggere e scrivere. Se serve ristretta per IP o per origine, cambia la clausola <em>using</em>.
+        </div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn primary" data-close-modal>Ok</button>
+        </div>
+      `);
+    }
+
+    /* ── SYNC ── */
+    async function doSync({ silent = false } = {}) {
+      if (!state.config) { openConfigModal(); return; }
+      if (!state.supabase) buildSupabaseClient();
+      if (state.syncing) return;
+      if (!state.online) { if (!silent) alert('Offline.'); return; }
+
+      state.syncing = true;
+      state.lastSyncError = null;
+      renderSyncBar();
+
+      try {
+        const table = state.config.table;
+
+        // 1) PUSH: elimina i record cancellati
+        if (state.pendingDeletes.length) {
+          const { error } = await state.supabase.from(table).delete().in('codice', state.pendingDeletes);
+          if (error) throw new Error('Delete: ' + error.message);
+          state.pendingDeletes = [];
+        }
+
+        // 2) PUSH: upsert dei record modificati/nuovi
+        const upserts = state.records.filter(r => r._pendingOp === 'upsert');
+        if (upserts.length) {
+          const payload = upserts.map(r => ({
+            codice: r.codice,
+            nome: r.nome || null,
+            lunghezza: r.lunghezza || null,
+            larghezza: r.larghezza || null,
+            spessore: r.spessore || null,
+            posizione: r.posizione || null,
+            quantita_pz: r.quantita_pz || null,
+            origine: r.origine || null,
+            created_at: r.created_at || null,
+            updated_at: r.updated_at || nowIso()
+          }));
+          const { error } = await state.supabase.from(table).upsert(payload, { onConflict: 'codice' });
+          if (error) throw new Error('Upsert: ' + error.message);
+          upserts.forEach(r => { r._pendingOp = null; r._remoteCodice = r.codice; });
+        }
+
+        // 3) PULL: scarica tutto (max 5000 per sicurezza)
+        const { data, error } = await state.supabase
+          .from(table).select('*').order('codice', { ascending: true }).limit(10000);
+        if (error) throw new Error('Select: ' + error.message);
+
+        // Conserva _id locali per stessi codici (per non rompere UI)
+        const localById = new Map(state.records.map(r => [r.codice, r._id]));
+        state.records = (data || []).map(row => normalizeRecord({
+          ...row,
+          _id: localById.get(row.codice) || uid(),
+          _remoteCodice: row.codice,
+          _pendingOp: null
+        }));
+
+        state.lastSyncAt = nowIso();
+        persist();
+        render();
+      } catch (err) {
+        console.error(err);
+        state.lastSyncError = err.message || String(err);
+        if (!silent) alert('Errore sync: ' + state.lastSyncError);
+      } finally {
+        state.syncing = false;
+        renderSyncBar();
+      }
+    }
+
+    /* ── Connessione ── */
+    function handleOnline()  { state.online = true;  renderSyncBar(); doSync({ silent: true }); }
+    function handleOffline() { state.online = false; renderSyncBar(); }
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     /* ── Event listeners ── */
-    el.csvInput.onchange = async (event) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      const text = await file.text();
-      pushHistory();
-      const imported = parseCsv(text);
-      // Le origini nell'import vengono aggiunte automaticamente; le origini manuali preesistenti restano
-      state.records = imported;
-      state.manualShelves = [];
-      state.selectedOrigin = null;
-      state.selectedShelfKey = null;
-      state.currentScreen = 'home';
-      // Rimuovi origini manuali che ora hanno prodotti (sono diventate "reali")
-      const importedOriginNames = new Set(imported.map(r => r.origine));
-      state.manualOrigins = state.manualOrigins.filter(mo => !importedOriginNames.has(mo.name));
-      persist(); render();
-      event.target.value = '';
-    };
+    el.syncBtn.onclick = () => doSync();
+    el.configBtn.onclick = openConfigModal;
+    el.helpBtn.onclick = openHelpModal;
 
     el.exportBtn.onclick = () => downloadFile(
-      `magazzino_export_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.csv`,
+      `magazzino_backup_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.csv`,
       toCsv(state.records),
       'text/csv;charset=utf-8'
     );
 
     el.resetBtn.onclick = () => {
-      if (confirm('Cancellare archivio locale, origini manuali e clipboard?')) {
-        pushHistory();
-        state.records = [];
-        state.manualShelves = [];
-        state.manualOrigins = [];
-        state.clipboard = [];
-        state.selectedOrigin = null;
-        state.selectedShelfKey = null;
-        state.currentScreen = 'home';
-        persist(); render();
-      }
+      if (!confirm('Svuotare la cache LOCALE? I dati sul DB Supabase NON verranno toccati. Le modifiche non ancora sincronizzate andranno perse.')) return;
+      pushHistory();
+      state.records = [];
+      state.manualShelves = [];
+      state.manualOrigins = [];
+      state.clipboard = [];
+      state.pendingDeletes = [];
+      state.selectedOrigin = null;
+      state.selectedShelfKey = null;
+      state.currentScreen = 'home';
+      persist(); render();
     };
-
-    el.downloadSampleBtn.onclick = () => downloadFile('magazzino_esempio.csv', [
-      'codice,nome,lunghezza,larghezza,spessore,posizione,quantita_pz,origine,created_at,updated_at',
-      'BAL001,OSB,2500,1250,18,2f1,12,scaffali,2026-03-18T09:00:00.000Z,2026-03-18T09:00:00.000Z',
-      'BAL002,Listellare,3000,1200,20,2f3,4,scaffali,2026-03-18T09:01:00.000Z,2026-03-18T09:01:00.000Z',
-      'BAL003,MDF,2800,2070,19,b2,7,sezionatrice,2026-03-18T09:02:00.000Z,2026-03-18T09:02:00.000Z'
-    ].join('\n'), 'text/csv;charset=utf-8');
 
     el.addOriginBtn.onclick = addOrigin;
     el.backBtn.onclick = () => { state.currentScreen = state.currentScreen === 'shelf' ? 'origin' : 'home'; render(); };
@@ -1481,7 +1619,18 @@
     el.sideNextShelfBtn.onclick = () => goToAdjacentShelf(1);
     el.pasteAllBtn.onclick = pasteAllClipboard;
     el.saveNowBtn.onclick = () => { persist(); alert('Salvato in locale.'); };
-    el.clearClipboardBtn.onclick = () => { if (!state.clipboard.length) return; pushHistory(); state.clipboard = []; persist(); renderClipboard(); };
+    el.clearClipboardBtn.onclick = () => {
+      if (!state.clipboard.length) return;
+      // I record "tagliati" (cut) che sono in clipboard e vengono buttati → vanno cancellati dal DB
+      pushHistory();
+      state.clipboard.forEach(item => {
+        if (item.mode === 'cut' && item.record.codice) schedulePendingDelete(item.record.codice);
+      });
+      state.clipboard = [];
+      persist();
+      renderClipboard();
+      renderSyncBar();
+    };
 
     document.addEventListener('keydown', (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
@@ -1495,8 +1644,19 @@
       }
     });
 
+    /* ── Avvio ── */
+    restoreConfig();
     restore();
+    if (state.config) buildSupabaseClient();
     render();
+
+    // Primo sync automatico in background se configurato e online
+    if (state.config && state.online) {
+      doSync({ silent: true });
+    } else if (!state.config) {
+      // Primo avvio senza config → suggerisco config
+      setTimeout(() => openConfigModal(), 300);
+    }
   </script>
 </body>
 </html>
