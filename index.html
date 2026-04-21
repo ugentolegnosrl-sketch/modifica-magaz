@@ -327,6 +327,33 @@
       vertical-align: middle;
     }
 
+    /* Sezioni risultati di ricerca dentro la vista origine */
+    .search-section { grid-column: 1 / -1; }
+    .search-section + .search-section { margin-top: 14px; }
+    .search-section-title {
+      font-size: 0.95rem; font-weight: 700;
+      margin-bottom: 8px; color: var(--text);
+    }
+    .search-section-title .count { color: var(--muted); font-weight: 500; margin-left: 6px; }
+    .shelf-subgrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .search-result-product {
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    .search-result-product:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .search-result-product .pill.shelf-pill {
+      background: rgba(88,166,255,0.14);
+      color: var(--accent);
+      border-color: rgba(88,166,255,0.26);
+    }
+
     @media (max-width: 520px) {
       .origin-grid, .shelf-grid, .stats, .product-edit, .modal-grid,
       .header-actions, .product-actions {
@@ -402,7 +429,7 @@
         </div>
 
         <div class="toolbar">
-          <input id="shelfSearchInput" class="input" placeholder="Cerca scaffale (es. 2f, b, g)" />
+          <input id="shelfSearchInput" class="input" placeholder="Cerca scaffale o prodotto (nome, codice, posizione)" />
           <button class="btn compact" id="addShelfBtn">+ Scaffale</button>
           <button class="btn compact" id="renameShelfBtn">Rinomina</button>
         </div>
@@ -932,17 +959,20 @@
     function renderOrigin() {
       if (!state.selectedOrigin) return;
       const shelves = getShelvesForOrigin(state.selectedOrigin);
+      const originRecords = getRecordsByOrigin(state.selectedOrigin);
       const q = normalizeText(el.shelfSearchInput.value).toLowerCase();
-      const filtered = q ? shelves.filter(s => s.label.includes(q)) : shelves;
+
       el.originTitle.textContent = state.selectedOrigin;
-      el.originMeta.textContent = `${shelves.length} scaffali · ${getRecordsByOrigin(state.selectedOrigin).length} prodotti`;
+      el.originMeta.textContent = `${shelves.length} scaffali · ${originRecords.length} prodotti`;
       el.reorderNote.classList.toggle('hidden', !state.reorderMode);
       el.toggleReorderBtn.textContent = `Riordino: ${state.reorderMode ? 'ON' : 'OFF'}`;
-      if (!filtered.length) {
-        el.shelfGrid.innerHTML = '<div class="empty" style="grid-column:1 / -1;">Nessuno scaffale trovato.</div>';
-        return;
-      }
-      el.shelfGrid.innerHTML = filtered.map(s => {
+
+      const filteredShelves = q ? shelves.filter(s => s.label.includes(q)) : shelves;
+      const filteredProducts = q ? originRecords.filter(r =>
+        [r.nome, r.codice, r.posizione, r.quantita_pz, r._parsed.shelfKey].join(' ').toLowerCase().includes(q)
+      ) : [];
+
+      const shelfCardsHtml = (list) => list.map(s => {
         const levels = [...s.levels].sort((a, b) => Number(a) - Number(b));
         return `<div class="shelf-card" data-shelf-key="${escapeHtml(s.key)}" draggable="${state.reorderMode}">
           <div><div class="shelf-title">${escapeHtml(s.label)}</div><div class="chip-row" style="margin-top:8px;"><span class="chip">${s.products} prodotti</span><span class="chip">Ripiani: ${levels.length ? levels.join(', ') : '—'}</span></div></div>
@@ -950,6 +980,75 @@
         </div>`;
       }).join('');
 
+      if (!q) {
+        // Nessuna ricerca: mostro solo la griglia degli scaffali (comportamento originale)
+        el.shelfGrid.innerHTML = filteredShelves.length
+          ? shelfCardsHtml(filteredShelves)
+          : '<div class="empty" style="grid-column:1 / -1;">Nessuno scaffale trovato.</div>';
+      } else {
+        // Con ricerca: due sezioni, prima prodotti (più rilevanti quando cerchi un oggetto specifico)
+        const MAX_PRODUCTS = 50;
+        const productsShown = filteredProducts.slice(0, MAX_PRODUCTS);
+        const productsSorted = [...productsShown].sort((a, b) =>
+          a._parsed.sortShelf - b._parsed.sortShelf ||
+          a._parsed.sortLevel - b._parsed.sortLevel ||
+          a.nome.localeCompare(b.nome, 'it')
+        );
+
+        let html = '';
+
+        if (filteredProducts.length) {
+          html += `<div class="search-section">
+            <div class="search-section-title">Prodotti<span class="count">(${filteredProducts.length}${filteredProducts.length > MAX_PRODUCTS ? ` — primi ${MAX_PRODUCTS}` : ''})</span></div>
+            <div class="product-list" style="margin-top:0;">
+              ${productsSorted.map(r => {
+                const pending = r._pendingOp === 'upsert';
+                return `<div class="product-card search-result-product${pending ? ' pending' : ''}" data-goto-shelf="${escapeHtml(r._parsed.shelfKey)}" data-goto-code="${escapeHtml(r.codice)}">
+                  <div class="product-top">
+                    <div>
+                      <div class="product-title">${escapeHtml(r.nome || '(senza nome)')}${pending ? '<span class="pending-marker" title="Non ancora sincronizzato"></span>' : ''}</div>
+                      <div class="product-summary" style="margin-top:6px;">
+                        <span class="pill shelf-pill">Scaffale: ${escapeHtml(r._parsed.shelfLabel || '-')}</span>
+                        <span class="pill">Codice: ${escapeHtml(r.codice || '-')}</span>
+                        <span class="pill">Pos: ${escapeHtml(r.posizione || '-')}</span>
+                        <span class="pill">Q.tà: ${escapeHtml(r.quantita_pz || '-')}</span>
+                      </div>
+                    </div>
+                    <div class="ripiano-badge">${escapeHtml(r._parsed.level || '?')}</div>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }
+
+        if (filteredShelves.length) {
+          html += `<div class="search-section">
+            <div class="search-section-title">Scaffali<span class="count">(${filteredShelves.length})</span></div>
+            <div class="shelf-subgrid">
+              ${shelfCardsHtml(filteredShelves)}
+            </div>
+          </div>`;
+        }
+
+        if (!html) html = '<div class="empty" style="grid-column:1 / -1;">Nessun risultato per "' + escapeHtml(q) + '".</div>';
+
+        el.shelfGrid.innerHTML = html;
+      }
+
+      // Click sui risultati prodotto → apro lo scaffale e pre-filtro per codice
+      el.shelfGrid.querySelectorAll('.search-result-product').forEach(card => {
+        card.onclick = () => {
+          const shelfKey = card.dataset.gotoShelf;
+          const code = card.dataset.gotoCode || '';
+          state.selectedShelfKey = shelfKey;
+          state.currentScreen = 'shelf';
+          el.productSearchInput.value = code;
+          render();
+        };
+      });
+
+      // Event handlers per le shelf-card (sia nella griglia normale che nella sub-griglia dei risultati)
       el.shelfGrid.querySelectorAll('[data-open-shelf]').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); openShelf(btn.dataset.openShelf); });
       el.shelfGrid.querySelectorAll('[data-rename-shelf]').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); promptRenameShelf(btn.dataset.renameShelf); });
       el.shelfGrid.querySelectorAll('.shelf-card').forEach(card => {
