@@ -453,6 +453,20 @@
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+    /* ═══════════════════════════════════════════════════════════════
+       CONFIG DI DEFAULT (opzionale)
+       Compila qui i valori prima del deploy per auto-configurare l'app.
+       Lascia stringhe vuote per costringere l'utente a configurarla a mano.
+       Queste variabili possono anche essere sostituite da una GitHub Action
+       al momento del deploy (vedi placeholder __SUPABASE_URL__ ecc.)
+       ═══════════════════════════════════════════════════════════════ */
+    const DEFAULT_CONFIG = {
+      url:     'https://qtioqpuzgoshashgjhgt.supabase.co',
+      anonKey: 'sb_publishable_HKUZI-e5Kazrc3UnoVmUQQ_2swVjp7J',
+      table:   'balle'
+    };
+    /* ═══════════════════════════════════════════════════════════════ */
+
     const STORAGE_KEY = 'magazzino_supabase_v1';
     const CONFIG_KEY  = 'magazzino_supabase_config_v1';
 
@@ -668,12 +682,38 @@
     }
 
     function restoreConfig() {
+      // 1) Priorità massima: query string (?supabase_url=...&supabase_key=...&supabase_table=...)
+      //    Utile per condividere un link pre-configurato con il collega.
+      const qs = new URLSearchParams(window.location.search);
+      const qsUrl   = qs.get('supabase_url');
+      const qsKey   = qs.get('supabase_key');
+      const qsTable = qs.get('supabase_table');
+      if (qsUrl && qsKey) {
+        state.config = { url: qsUrl, anonKey: qsKey, table: qsTable || DEFAULT_CONFIG.table || 'balle' };
+        persistConfig();
+        // Pulisco la query string dall'URL per non esporre la key nell'history/share
+        try { window.history.replaceState({}, '', window.location.pathname + window.location.hash); } catch {}
+        return;
+      }
+
+      // 2) Config già salvata in localStorage (dopo la prima configurazione)
       const raw = localStorage.getItem(CONFIG_KEY);
-      if (!raw) return;
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed?.url && parsed?.anonKey && parsed?.table) state.config = parsed;
-      } catch (e) { console.error(e); }
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed?.url && parsed?.anonKey && parsed?.table) { state.config = parsed; return; }
+        } catch (e) { console.error(e); }
+      }
+
+      // 3) Fallback: DEFAULT_CONFIG hardcoded (utile per deploy GitHub Pages)
+      if (DEFAULT_CONFIG.url && DEFAULT_CONFIG.anonKey) {
+        state.config = {
+          url: DEFAULT_CONFIG.url,
+          anonKey: DEFAULT_CONFIG.anonKey,
+          table: DEFAULT_CONFIG.table || 'balle'
+        };
+        persistConfig();
+      }
     }
 
     function buildSupabaseClient() {
