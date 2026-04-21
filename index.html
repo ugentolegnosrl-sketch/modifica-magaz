@@ -1036,15 +1036,10 @@
         el.shelfGrid.innerHTML = html;
       }
 
-      // Click sui risultati prodotto → apro lo scaffale e pre-filtro per codice
+      // Click sui risultati prodotto → apro lo scaffale (il filtro viene pulito da openShelf)
       el.shelfGrid.querySelectorAll('.search-result-product').forEach(card => {
         card.onclick = () => {
-          const shelfKey = card.dataset.gotoShelf;
-          const code = card.dataset.gotoCode || '';
-          state.selectedShelfKey = shelfKey;
-          state.currentScreen = 'shelf';
-          el.productSearchInput.value = code;
-          render();
+          openShelf(card.dataset.gotoShelf);
         };
       });
 
