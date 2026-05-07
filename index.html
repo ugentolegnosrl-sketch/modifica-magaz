@@ -354,6 +354,112 @@
       border-color: rgba(88,166,255,0.26);
     }
 
+    /* ── Schermata Inventario ── */
+    .inv-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px; align-items: center;
+      margin-top: 12px;
+    }
+    .inv-threshold {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 6px 10px;
+    }
+    .inv-threshold input {
+      width: 64px; padding: 6px 8px;
+      background: transparent; border: 0; color: var(--text);
+      font: inherit; outline: none; text-align: center;
+      font-weight: 700;
+    }
+    .inv-section { margin-top: 14px; }
+    .inv-section-title {
+      font-size: 1rem; font-weight: 700;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .inv-section-title .count { color: var(--muted); font-weight: 500; font-size: 0.9rem; }
+    .inv-section.danger .inv-section-title { color: var(--danger); }
+
+    .inv-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .inv-card {
+      background: linear-gradient(180deg, #1c2130, #151922);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      display: flex; flex-direction: column; gap: 10px;
+      cursor: pointer; transition: 0.15s ease;
+    }
+    .inv-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .inv-card.low {
+      border-color: rgba(255,123,114,0.45);
+      background: linear-gradient(180deg, #2a1a1d, #1a1418);
+    }
+    .inv-card.low:hover { border-color: var(--danger); }
+
+    .inv-card-head {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 8px; align-items: start;
+    }
+    .inv-name { font-size: 1.05rem; font-weight: 700; word-break: break-word; }
+    .inv-dims {
+      font-size: 0.85rem; color: var(--muted);
+      margin-top: 4px;
+    }
+    .inv-total {
+      min-width: 60px;
+      text-align: center;
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: rgba(88,166,255,0.14);
+      color: var(--accent);
+      border: 1px solid rgba(88,166,255,0.26);
+      font-weight: 800; font-size: 1.2rem;
+      line-height: 1.1;
+    }
+    .inv-card.low .inv-total {
+      background: rgba(255,123,114,0.16);
+      color: var(--danger);
+      border-color: rgba(255,123,114,0.32);
+    }
+    .inv-total .unit {
+      display: block;
+      font-size: 0.65rem; font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .inv-card.low .inv-total .unit { color: rgba(255,123,114,0.7); }
+
+    .inv-locations {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      font-size: 0.82rem;
+    }
+    .inv-loc {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      transition: 0.12s ease;
+    }
+    .inv-loc:hover { border-color: var(--accent); color: var(--accent); }
+    .inv-loc .qty {
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+    .inv-card.low .inv-loc .qty { color: var(--warning); }
+
     @media (max-width: 520px) {
       .origin-grid, .shelf-grid, .stats, .product-edit, .modal-grid,
       .header-actions, .product-actions {
@@ -396,6 +502,7 @@
         </div>
 
         <div class="header-actions">
+          <button class="btn primary" id="inventoryBtn">📊 Inventario</button>
           <button class="btn ghost" id="configBtn">Configura Supabase</button>
           <button class="btn ghost" id="exportBtn">Esporta CSV (backup)</button>
           <button class="btn ghost" id="resetBtn">Svuota cache locale</button>
@@ -460,6 +567,33 @@
         <div id="productList" class="product-list"></div>
       </div>
     </section>
+
+    <section id="screenInventory" class="hidden">
+      <div class="panel">
+        <div class="row space-between">
+          <div>
+            <h2>Inventario per tipo</h2>
+            <p class="muted small" id="inventoryMeta">Pannelli aggregati per nome e dimensioni</p>
+          </div>
+        </div>
+
+        <div class="inv-controls">
+          <input id="inventorySearchInput" class="input" placeholder="Cerca per nome o dimensione" />
+          <div class="inv-threshold">
+            <span class="muted small">Soglia "in esaurimento":</span>
+            <input type="number" id="inventoryThresholdInput" min="0" step="1" value="5" />
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><div class="muted tiny">Tipi</div><div class="n" id="invStatTypes">0</div></div>
+          <div class="stat"><div class="muted tiny">Pezzi totali</div><div class="n" id="invStatTotal">0</div></div>
+          <div class="stat"><div class="muted tiny">In esaurimento</div><div class="n" id="invStatLow">0</div></div>
+        </div>
+      </div>
+
+      <div id="inventoryContent"></div>
+    </section>
   </div>
 
   <div class="bottom-sheet">
@@ -515,7 +649,9 @@
       online: navigator.onLine,
       syncing: false,
       lastSyncAt: null,
-      lastSyncError: null
+      lastSyncError: null,
+      inventoryThreshold: 5,
+      inventorySearch: ''
     };
 
     const el = {
@@ -561,7 +697,17 @@
       sideNextShelfBtn: document.getElementById('sideNextShelfBtn'),
       sidePrevLabel: document.getElementById('sidePrevLabel'),
       sideNextLabel: document.getElementById('sideNextLabel'),
-      modalRoot: document.getElementById('modalRoot')
+      modalRoot: document.getElementById('modalRoot'),
+
+      inventoryBtn: document.getElementById('inventoryBtn'),
+      screenInventory: document.getElementById('screenInventory'),
+      inventoryMeta: document.getElementById('inventoryMeta'),
+      inventorySearchInput: document.getElementById('inventorySearchInput'),
+      inventoryThresholdInput: document.getElementById('inventoryThresholdInput'),
+      invStatTypes: document.getElementById('invStatTypes'),
+      invStatTotal: document.getElementById('invStatTotal'),
+      invStatLow: document.getElementById('invStatLow'),
+      inventoryContent: document.getElementById('inventoryContent')
     };
 
     /* ── Utilities ── */
@@ -683,7 +829,8 @@
         manualOrigins: state.manualOrigins,
         clipboard: state.clipboard,
         pendingDeletes: state.pendingDeletes,
-        lastSyncAt: state.lastSyncAt
+        lastSyncAt: state.lastSyncAt,
+        inventoryThreshold: state.inventoryThreshold
       }));
       renderStats();
       renderSyncBar();
@@ -700,6 +847,7 @@
         state.clipboard = Array.isArray(parsed.clipboard) ? parsed.clipboard : [];
         state.pendingDeletes = Array.isArray(parsed.pendingDeletes) ? parsed.pendingDeletes : [];
         state.lastSyncAt = parsed.lastSyncAt || null;
+        if (Number.isFinite(parsed.inventoryThreshold)) state.inventoryThreshold = parsed.inventoryThreshold;
       } catch (e) { console.error(e); }
     }
 
@@ -879,6 +1027,7 @@
       el.screenHome.classList.toggle('hidden', state.currentScreen !== 'home');
       el.screenOrigin.classList.toggle('hidden', state.currentScreen !== 'origin');
       el.screenShelf.classList.toggle('hidden', state.currentScreen !== 'shelf');
+      el.screenInventory.classList.toggle('hidden', state.currentScreen !== 'inventory');
       el.backBtn.classList.toggle('hidden', state.currentScreen === 'home');
 
       const showSides = state.currentScreen === 'shelf';
@@ -902,6 +1051,9 @@
       } else if (state.currentScreen === 'origin') {
         el.pageTitle.textContent = 'Scaffali';
         el.pageSubtitle.textContent = state.selectedOrigin || '';
+      } else if (state.currentScreen === 'inventory') {
+        el.pageTitle.textContent = 'Inventario';
+        el.pageSubtitle.textContent = 'Pannelli aggregati per tipo';
       } else {
         el.pageTitle.textContent = 'Contenuto scaffale';
         el.pageSubtitle.textContent = `${state.selectedOrigin || ''} · ${state.selectedShelfKey || ''}`;
@@ -1142,12 +1294,178 @@
       });
     }
 
+    /* ── Inventario aggregato ── */
+    function parseQty(value) {
+      const s = normalizeText(value).replace(',', '.');
+      const n = parseFloat(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function buildInventoryGroups() {
+      // Raggruppa i prodotti per chiave: nome|lunghezza|larghezza|spessore (lowercase, trim).
+      // Le lunghezza+larghezza+spessore tracciano un "tipo" univoco; il nome lo etichetta.
+      const map = new Map();
+      state.records.forEach(r => {
+        const nome = (r.nome || '(senza nome)').trim();
+        const lung = normalizeText(r.lunghezza);
+        const larg = normalizeText(r.larghezza);
+        const spes = normalizeText(r.spessore);
+        const key = [nome.toLowerCase(), lung, larg, spes].join('|');
+
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            nome,
+            lunghezza: lung,
+            larghezza: larg,
+            spessore: spes,
+            total: 0,
+            count: 0,
+            locations: []   // [{ origine, shelfKey, shelfLabel, posizione, qty, codice, _id, pending }]
+          });
+        }
+        const group = map.get(key);
+        const qty = parseQty(r.quantita_pz);
+        group.total += qty;
+        group.count += 1;
+        group.locations.push({
+          origine: r.origine,
+          shelfKey: r._parsed.shelfKey,
+          shelfLabel: r._parsed.shelfLabel || r._parsed.shelfKey,
+          posizione: r.posizione,
+          qty,
+          codice: r.codice,
+          _id: r._id,
+          pending: r._pendingOp === 'upsert'
+        });
+      });
+
+      // Ordino le locations interne per scaffale e posizione
+      map.forEach(group => {
+        group.locations.sort((a, b) =>
+          a.origine.localeCompare(b.origine, 'it') ||
+          a.shelfLabel.localeCompare(b.shelfLabel, 'it') ||
+          a.posizione.localeCompare(b.posizione, 'it')
+        );
+      });
+
+      return [...map.values()].sort((a, b) =>
+        a.nome.localeCompare(b.nome, 'it') ||
+        Number(a.lunghezza) - Number(b.lunghezza) ||
+        Number(a.spessore) - Number(b.spessore)
+      );
+    }
+
+    function formatQty(n) {
+      if (Number.isInteger(n)) return String(n);
+      return n.toFixed(2).replace(/\.?0+$/, '');
+    }
+
+    function buildInvCardHtml(group, isLow) {
+      const dimsParts = [group.lunghezza, group.larghezza, group.spessore].map(v => v).filter(Boolean);
+      const dimsLabel = dimsParts.length ? dimsParts.join(' × ') : 'dimensioni n/d';
+      const locs = group.locations.map(loc =>
+        `<button class="inv-loc" data-goto-origin="${escapeHtml(loc.origine)}" data-goto-shelf="${escapeHtml(loc.shelfKey)}" title="${escapeHtml(loc.codice)} · ${escapeHtml(loc.posizione)}">
+          <span>${escapeHtml(loc.origine)} · ${escapeHtml(loc.shelfLabel)}</span>
+          <span class="qty">${escapeHtml(formatQty(loc.qty))}</span>
+        </button>`
+      ).join('');
+
+      return `<div class="inv-card${isLow ? ' low' : ''}" data-inv-key="${escapeHtml(group.key)}">
+        <div class="inv-card-head">
+          <div>
+            <div class="inv-name">${escapeHtml(group.nome)}</div>
+            <div class="inv-dims">${escapeHtml(dimsLabel)}</div>
+          </div>
+          <div class="inv-total">
+            ${escapeHtml(formatQty(group.total))}
+            <span class="unit">pezzi</span>
+          </div>
+        </div>
+        <div class="inv-locations">${locs}</div>
+      </div>`;
+    }
+
+    function renderInventory() {
+      if (state.currentScreen !== 'inventory') return;
+
+      // Sincronizzo input UI con stato
+      el.inventoryThresholdInput.value = String(state.inventoryThreshold);
+      if (el.inventorySearchInput.value !== state.inventorySearch) {
+        el.inventorySearchInput.value = state.inventorySearch;
+      }
+
+      const allGroups = buildInventoryGroups();
+      const q = state.inventorySearch.trim().toLowerCase();
+      const filtered = q
+        ? allGroups.filter(g =>
+            g.nome.toLowerCase().includes(q) ||
+            g.lunghezza.toLowerCase().includes(q) ||
+            g.larghezza.toLowerCase().includes(q) ||
+            g.spessore.toLowerCase().includes(q)
+          )
+        : allGroups;
+
+      const threshold = state.inventoryThreshold;
+      const lowGroups = filtered.filter(g => g.total <= threshold);
+      const okGroups  = filtered.filter(g => g.total >  threshold);
+
+      // Statistiche (sull'insieme TOTALE, non filtrato — più utili come overview)
+      const totalsAll = allGroups.reduce((s, g) => s + g.total, 0);
+      const lowAll = allGroups.filter(g => g.total <= threshold).length;
+      el.invStatTypes.textContent = allGroups.length;
+      el.invStatTotal.textContent = formatQty(totalsAll);
+      el.invStatLow.textContent = lowAll;
+      el.inventoryMeta.textContent = `${allGroups.length} tipi · ${formatQty(totalsAll)} pezzi totali`;
+
+      let html = '';
+
+      if (!filtered.length) {
+        html = '<div class="panel"><div class="empty">Nessun prodotto da mostrare.</div></div>';
+      } else {
+        if (lowGroups.length) {
+          html += `<div class="panel inv-section danger">
+            <div class="inv-section-title">⚠ In esaurimento <span class="count">(≤ ${escapeHtml(formatQty(threshold))} pezzi · ${lowGroups.length} tipi)</span></div>
+            <div class="inv-grid">
+              ${lowGroups.map(g => buildInvCardHtml(g, true)).join('')}
+            </div>
+          </div>`;
+        }
+        if (okGroups.length) {
+          html += `<div class="panel inv-section">
+            <div class="inv-section-title">Inventario completo <span class="count">(${okGroups.length} tipi)</span></div>
+            <div class="inv-grid">
+              ${okGroups.map(g => buildInvCardHtml(g, false)).join('')}
+            </div>
+          </div>`;
+        }
+      }
+
+      el.inventoryContent.innerHTML = html;
+
+      // Click su una "location chip" → vai allo scaffale
+      el.inventoryContent.querySelectorAll('.inv-loc').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const origine = btn.dataset.gotoOrigin;
+          const shelfKey = btn.dataset.gotoShelf;
+          state.selectedOrigin = origine;
+          state.selectedShelfKey = shelfKey;
+          state.currentScreen = 'shelf';
+          el.shelfSearchInput.value = '';
+          el.productSearchInput.value = '';
+          render();
+        };
+      });
+    }
+
     function render() {
       renderStats();
       renderSyncBar();
       renderHome();
       renderOrigin();
       renderShelf();
+      renderInventory();
       renderClipboard();
       updateLayout();
     }
@@ -1754,7 +2072,26 @@ create policy "anon_full_access"
     };
 
     el.addOriginBtn.onclick = addOrigin;
-    el.backBtn.onclick = () => { state.currentScreen = state.currentScreen === 'shelf' ? 'origin' : 'home'; render(); };
+    el.backBtn.onclick = () => {
+      if (state.currentScreen === 'shelf') state.currentScreen = 'origin';
+      else state.currentScreen = 'home';
+      render();
+    };
+    el.inventoryBtn.onclick = () => {
+      state.currentScreen = 'inventory';
+      state.inventorySearch = '';
+      render();
+    };
+    el.inventorySearchInput.oninput = () => {
+      state.inventorySearch = el.inventorySearchInput.value;
+      renderInventory();
+    };
+    el.inventoryThresholdInput.onchange = () => {
+      const v = parseInt(el.inventoryThresholdInput.value, 10);
+      state.inventoryThreshold = Number.isFinite(v) && v >= 0 ? v : 0;
+      persist();
+      renderInventory();
+    };
     el.shelfSearchInput.oninput = () => renderOrigin();
     el.productSearchInput.oninput = () => renderShelf();
     el.toggleReorderBtn.onclick = () => { state.reorderMode = !state.reorderMode; renderOrigin(); };
