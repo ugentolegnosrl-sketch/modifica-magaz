@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Magazzino Mobile — Supabase</title>
+  <title>Magazzino Mobile — Inventario categorie nascoste v3</title>
   <style>
     :root {
       --bg: #0f1115;
@@ -488,6 +488,12 @@
       flex-direction: column;
       gap: 8px;
     }
+    .inv-category-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: stretch;
+    }
     .inv-category-row {
       width: 100%;
       display: flex; align-items: center; justify-content: space-between;
@@ -542,6 +548,35 @@
       white-space: nowrap;
     }
     .inv-category-row.danger .inv-category-link { color: var(--danger); }
+    .inv-hide-btn, .inv-restore-btn {
+      align-self: stretch;
+      white-space: nowrap;
+    }
+    .inv-hidden-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .inv-hidden-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px dashed var(--border);
+      background: rgba(255,255,255,0.025);
+    }
+    .inv-hidden-title {
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .inv-hidden-meta {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
 
     @media (max-width: 520px) {
       .origin-grid, .shelf-grid, .stats, .product-edit, .modal-grid,
@@ -549,6 +584,8 @@
         grid-template-columns: 1fr 1fr;
       }
       .toolbar { grid-template-columns: 1fr; }
+      .inv-category-item, .inv-hidden-item { grid-template-columns: 1fr; }
+      .inv-hide-btn, .inv-restore-btn { width: 100%; }
     }
   </style>
 </head>
@@ -656,8 +693,12 @@
         <div class="row space-between">
           <div>
             <h2>Inventario per categoria</h2>
-            <p class="muted small" id="inventoryMeta">Categorie con PDF aggregati</p>
+            <p class="muted small" id="inventoryMeta">Lista categorie PDF · categorie nascoste salvate sul dispositivo</p>
           </div>
+        </div>
+
+        <div class="note" style="margin-top:12px;">
+          Gestione categorie attiva: usa <strong>Nascondi</strong> per togliere una categoria dalla lista. Resta nascosta anche dopo aver chiuso e riaperto l’app.
         </div>
 
         <div class="inv-controls">
@@ -695,6 +736,7 @@
   <div id="modalRoot" class="hidden"></div>
 
   <script type="module">
+    // PATCH_CATEGORIE_NASCOSTE_V3: categorie inventario nascondibili e persistenti in localStorage
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
     /* ═══════════════════════════════════════════════════════════════
@@ -734,7 +776,8 @@
       lastSyncAt: null,
       lastSyncError: null,
       inventoryThreshold: 5,
-      inventorySearch: ''
+      inventorySearch: '',
+      inventoryHiddenCategories: []
     };
 
     const el = {
@@ -913,7 +956,8 @@
         clipboard: state.clipboard,
         pendingDeletes: state.pendingDeletes,
         lastSyncAt: state.lastSyncAt,
-        inventoryThreshold: state.inventoryThreshold
+        inventoryThreshold: state.inventoryThreshold,
+        inventoryHiddenCategories: state.inventoryHiddenCategories
       }));
       renderStats();
       renderSyncBar();
@@ -931,6 +975,7 @@
         state.pendingDeletes = Array.isArray(parsed.pendingDeletes) ? parsed.pendingDeletes : [];
         state.lastSyncAt = parsed.lastSyncAt || null;
         if (Number.isFinite(parsed.inventoryThreshold)) state.inventoryThreshold = parsed.inventoryThreshold;
+        state.inventoryHiddenCategories = Array.isArray(parsed.inventoryHiddenCategories) ? parsed.inventoryHiddenCategories.map(String) : [];
       } catch (e) { console.error(e); }
     }
 
@@ -1747,6 +1792,31 @@
       return n.toFixed(2).replace(/\.?0+$/, '');
     }
 
+    const LOW_STOCK_CATEGORY_KEY = '__low_stock__';
+    function inventoryTypeKey(tipo) {
+      return 'type:' + normalizeText(tipo).toLowerCase();
+    }
+    function isInventoryCategoryHidden(key) {
+      return state.inventoryHiddenCategories.includes(String(key));
+    }
+    function hideInventoryCategory(key) {
+      const k = String(key);
+      if (!state.inventoryHiddenCategories.includes(k)) state.inventoryHiddenCategories.push(k);
+      persist();
+      renderInventory();
+    }
+    function showInventoryCategory(key) {
+      const k = String(key);
+      state.inventoryHiddenCategories = state.inventoryHiddenCategories.filter(item => item !== k);
+      persist();
+      renderInventory();
+    }
+    function showAllInventoryCategories() {
+      state.inventoryHiddenCategories = [];
+      persist();
+      renderInventory();
+    }
+
     function renderInventory() {
       if (state.currentScreen !== 'inventory') return;
 
@@ -1771,7 +1841,6 @@
       el.invStatTypes.textContent = allTypesCount;
       el.invStatTotal.textContent = formatQty(allTotalQty);
       el.invStatLow.textContent = allLowCount;
-      el.inventoryMeta.textContent = `${allTypesCount} categorie · ${formatQty(allTotalQty)} pezzi totali · ogni voce apre un PDF`;
 
       // Ricerca: se cerchi una categoria, un nome o una dimensione, il PDF generato usa solo i risultati filtrati.
       const matches = (g) => !q ||
@@ -1790,64 +1859,144 @@
         t.okItems  = t.items.filter(g => g.total >  threshold);
       });
 
-      if (!filteredTypes.length) {
+      const lowItems = filteredTypes.flatMap(t => t.lowItems);
+      const lowQty = lowItems.reduce((s, g) => s + g.total, 0);
+      const lowTypesCount = new Set(lowItems.map(g => g.tipo)).size;
+      const isLowHidden = isInventoryCategoryHidden(LOW_STOCK_CATEGORY_KEY);
+      const visibleTypes = filteredTypes.filter(t => !isInventoryCategoryHidden(inventoryTypeKey(t.tipo)));
+      const hiddenEntries = [];
+
+      if (isLowHidden) {
+        hiddenEntries.push({
+          key: LOW_STOCK_CATEGORY_KEY,
+          title: '⚠ Materiale in esaurimento',
+          meta: lowItems.length
+            ? `${lowItems.length} dimensioni · ${formatQty(lowQty)} pezzi · PDF unico`
+            : `Categoria speciale · soglia ≤ ${formatQty(threshold)}`
+        });
+      }
+
+      types.forEach(t => {
+        const key = inventoryTypeKey(t.tipo);
+        if (!isInventoryCategoryHidden(key)) return;
+        const filteredMatch = filteredTypes.find(ft => ft.tipo === t.tipo);
+        const itemsForMeta = filteredMatch?.items || t.items;
+        const totalQty = itemsForMeta.reduce((s, g) => s + g.total, 0);
+        hiddenEntries.push({
+          key,
+          title: t.tipo,
+          meta: `${itemsForMeta.length} dimensioni · ${formatQty(totalQty)} pezzi`
+        });
+      });
+
+      const hiddenCount = hiddenEntries.length;
+      el.inventoryMeta.textContent = `${allTypesCount} categorie · ${formatQty(allTotalQty)} pezzi totali · ${hiddenCount} nascoste · ogni voce apre un PDF`;
+
+      if (!filteredTypes.length && !hiddenEntries.length) {
         el.inventoryContent.innerHTML = '<div class="panel"><div class="empty">Nessuna categoria da mostrare.</div></div>';
         return;
       }
 
-      const lowItems = filteredTypes.flatMap(t => t.lowItems);
-      const lowQty = lowItems.reduce((s, g) => s + g.total, 0);
-      const lowTypesCount = new Set(lowItems.map(g => g.tipo)).size;
-
       let html = '';
 
       // Categoria unica separata per tutto il materiale in esaurimento.
-      html += `<div class="panel inv-section danger">
-        <div class="inv-section-title">Categoria speciale <span class="count">(PDF unico)</span></div>
-        <div class="inv-category-list">
-          <button class="inv-category-row danger" data-pdf-low="1" ${lowItems.length ? '' : 'disabled'}>
-            <span class="inv-category-main">
-              <span class="inv-category-title">⚠ Materiale in esaurimento</span>
-              <span class="inv-category-meta">
-                ${lowItems.length
-                  ? `${lowItems.length} dimensioni · ${formatQty(lowQty)} pezzi · ${lowTypesCount} categorie coinvolte · soglia ≤ ${formatQty(threshold)}`
-                  : `Nessun materiale sotto soglia ≤ ${formatQty(threshold)}`}
-              </span>
-            </span>
-            <span class="inv-category-link">${lowItems.length ? 'Apri PDF →' : 'Nessun PDF'}</span>
-          </button>
-        </div>
-      </div>`;
+      if (!isLowHidden) {
+        html += `<div class="panel inv-section danger">
+          <div class="inv-section-title">Categoria speciale <span class="count">(PDF unico)</span></div>
+          <div class="inv-category-list">
+            <div class="inv-category-item">
+              <button class="inv-category-row danger" data-pdf-low="1" ${lowItems.length ? '' : 'disabled'}>
+                <span class="inv-category-main">
+                  <span class="inv-category-title">⚠ Materiale in esaurimento</span>
+                  <span class="inv-category-meta">
+                    ${lowItems.length
+                      ? `${lowItems.length} dimensioni · ${formatQty(lowQty)} pezzi · ${lowTypesCount} categorie coinvolte · soglia ≤ ${formatQty(threshold)}`
+                      : `Nessun materiale sotto soglia ≤ ${formatQty(threshold)}`}
+                  </span>
+                </span>
+                <span class="inv-category-link">${lowItems.length ? 'Apri PDF →' : 'Nessun PDF'}</span>
+              </button>
+              <button class="btn compact ghost inv-hide-btn" data-hide-inv-cat="${LOW_STOCK_CATEGORY_KEY}">👁 Nascondi</button>
+            </div>
+          </div>
+        </div>`;
+      }
 
       // Lista pulita: una voce per categoria, senza card dei prodotti.
-      html += `<div class="panel inv-section">
-        <div class="inv-section-title">Inventario per categoria <span class="count">(${filteredTypes.length} categorie)</span></div>
-        <div class="inv-category-list">
-          ${filteredTypes.map(t => {
-            const totLow = t.lowItems.length;
-            const totQty = t.items.reduce((s, g) => s + g.total, 0);
-            const totDims = t.items.length;
-            const listellariNote = isListellariType(t.tipo) ? ' · PDF diviso in importati / non importati' : '';
-            return `<button class="inv-category-row" data-pdf-type="${escapeHtml(t.tipo)}">
-              <span class="inv-category-main">
-                <span class="inv-category-title">${escapeHtml(t.tipo)}</span>
-                <span class="inv-category-meta">
-                  ${totDims} dimensioni · ${formatQty(totQty)} pezzi${totLow ? ` · ${totLow} in esaurimento` : ''}${escapeHtml(listellariNote)}
-                </span>
-              </span>
-              <span class="inv-category-link">Apri PDF →</span>
-            </button>`;
-          }).join('')}
-        </div>
-      </div>`;
+      if (visibleTypes.length) {
+        html += `<div class="panel inv-section">
+          <div class="inv-section-title">Inventario per categoria <span class="count">(${visibleTypes.length} visibili${hiddenCount ? ` · ${hiddenCount} nascoste` : ''})</span></div>
+          <div class="inv-category-list">
+            ${visibleTypes.map(t => {
+              const totLow = t.lowItems.length;
+              const totQty = t.items.reduce((s, g) => s + g.total, 0);
+              const totDims = t.items.length;
+              const listellariNote = isListellariType(t.tipo) ? ' · PDF diviso in importati / non importati' : '';
+              return `<div class="inv-category-item">
+                <button class="inv-category-row" data-pdf-type="${escapeHtml(t.tipo)}">
+                  <span class="inv-category-main">
+                    <span class="inv-category-title">${escapeHtml(t.tipo)}</span>
+                    <span class="inv-category-meta">
+                      ${totDims} dimensioni · ${formatQty(totQty)} pezzi${totLow ? ` · ${totLow} in esaurimento` : ''}${escapeHtml(listellariNote)}
+                    </span>
+                  </span>
+                  <span class="inv-category-link">Apri PDF →</span>
+                </button>
+                <button class="btn compact ghost inv-hide-btn" data-hide-inv-cat="${escapeHtml(inventoryTypeKey(t.tipo))}">👁 Nascondi</button>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      } else if (filteredTypes.length) {
+        html += '<div class="panel"><div class="empty">Tutte le categorie filtrate sono nascoste. Puoi ripristinarle dal riquadro sotto.</div></div>';
+      }
 
-      el.inventoryContent.innerHTML = html;
+      if (hiddenEntries.length) {
+        html += `<div class="panel inv-section">
+          <div class="inv-section-title">Categorie nascoste <span class="count">(${hiddenEntries.length})</span></div>
+          <div class="note warn">Queste categorie restano nascoste anche dopo aver chiuso e riaperto l’app. Puoi ripristinarle quando vuoi.</div>
+          <div class="inv-hidden-list">
+            ${hiddenEntries.map(item => `<div class="inv-hidden-item">
+              <div>
+                <div class="inv-hidden-title">${escapeHtml(item.title)}</div>
+                <div class="inv-hidden-meta">${escapeHtml(item.meta)}</div>
+              </div>
+              <button class="btn compact primary inv-restore-btn" data-show-hidden-cat="${escapeHtml(item.key)}">Ripristina</button>
+            </div>`).join('')}
+          </div>
+          <div style="margin-top:10px;">
+            <button class="btn compact ghost" data-show-all-inv-cats="1">Mostra tutte le categorie</button>
+          </div>
+        </div>`;
+      }
+
+      el.inventoryContent.innerHTML = html || '<div class="panel"><div class="empty">Nessuna categoria da mostrare.</div></div>';
 
       const setPdfLoading = (btn, isLoading, originalText) => {
         const link = btn.querySelector('.inv-category-link');
         btn.disabled = isLoading;
         if (link) link.textContent = isLoading ? 'Genero…' : originalText;
       };
+
+      // Nascondi / ripristina categorie.
+      el.inventoryContent.querySelectorAll('[data-hide-inv-cat]').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          hideInventoryCategory(btn.dataset.hideInvCat);
+        };
+      });
+      el.inventoryContent.querySelectorAll('[data-show-hidden-cat]').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          showInventoryCategory(btn.dataset.showHiddenCat);
+        };
+      });
+      el.inventoryContent.querySelectorAll('[data-show-all-inv-cats]').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          showAllInventoryCategories();
+        };
+      });
 
       // Click sulla categoria speciale → PDF unico del materiale in esaurimento.
       el.inventoryContent.querySelectorAll('[data-pdf-low]').forEach(btn => {
