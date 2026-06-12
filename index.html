@@ -483,6 +483,66 @@
       flex-shrink: 0;
     }
 
+    .inv-category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .inv-category-row {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #1c2130, #151922);
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    .inv-category-row:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .inv-category-row.danger {
+      border-color: rgba(255,123,114,0.45);
+      background: linear-gradient(180deg, #2a1a1d, #1a1418);
+    }
+    .inv-category-row.danger:hover { border-color: var(--danger); }
+    .inv-category-row:disabled {
+      opacity: 0.55;
+      cursor: default;
+      transform: none;
+    }
+    .inv-category-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .inv-category-title {
+      font-weight: 800;
+      font-size: 1.02rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      word-break: break-word;
+    }
+    .inv-category-meta {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.35;
+    }
+    .inv-category-row.danger .inv-category-meta { color: rgba(255,210,207,0.8); }
+    .inv-category-link {
+      flex-shrink: 0;
+      color: var(--accent);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .inv-category-row.danger .inv-category-link { color: var(--danger); }
+
     @media (max-width: 520px) {
       .origin-grid, .shelf-grid, .stats, .product-edit, .modal-grid,
       .header-actions, .product-actions {
@@ -595,13 +655,13 @@
       <div class="panel">
         <div class="row space-between">
           <div>
-            <h2>Inventario per tipo</h2>
-            <p class="muted small" id="inventoryMeta">Pannelli aggregati per nome e dimensioni</p>
+            <h2>Inventario per categoria</h2>
+            <p class="muted small" id="inventoryMeta">Categorie con PDF aggregati</p>
           </div>
         </div>
 
         <div class="inv-controls">
-          <input id="inventorySearchInput" class="input" placeholder="Cerca per nome o dimensione" />
+          <input id="inventorySearchInput" class="input" placeholder="Cerca categoria, nome o dimensione" />
           <div class="inv-threshold">
             <span class="muted small">Soglia "in esaurimento":</span>
             <input type="number" id="inventoryThresholdInput" min="0" step="1" value="5" />
@@ -609,7 +669,7 @@
         </div>
 
         <div class="stats">
-          <div class="stat"><div class="muted tiny">Tipi</div><div class="n" id="invStatTypes">0</div></div>
+          <div class="stat"><div class="muted tiny">Categorie</div><div class="n" id="invStatTypes">0</div></div>
           <div class="stat"><div class="muted tiny">Pezzi totali</div><div class="n" id="invStatTotal">0</div></div>
           <div class="stat"><div class="muted tiny">In esaurimento</div><div class="n" id="invStatLow">0</div></div>
         </div>
@@ -1076,7 +1136,7 @@
         el.pageSubtitle.textContent = state.selectedOrigin || '';
       } else if (state.currentScreen === 'inventory') {
         el.pageTitle.textContent = 'Inventario';
-        el.pageSubtitle.textContent = 'Pannelli aggregati per tipo';
+        el.pageSubtitle.textContent = 'Categorie PDF';
       } else {
         el.pageTitle.textContent = 'Contenuto scaffale';
         el.pageSubtitle.textContent = `${state.selectedOrigin || ''} · ${state.selectedShelfKey || ''}`;
@@ -1339,14 +1399,178 @@
       return window.jspdf;
     }
 
+    function safePdfName(label) {
+      return normalizeText(label)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '') || 'inventario';
+    }
+
+    function dimsLabel(group) {
+      return [group.lunghezza, group.larghezza, group.spessore].filter(Boolean).join(' × ') || '—';
+    }
+
+    function isListellariType(tipo) {
+      return normalizeText(tipo).toLowerCase().startsWith('listellar');
+    }
+
+    function isImportedInventoryItem(group) {
+      const text = [group.tipo, group.nome].join(' ').toLowerCase();
+      // Se nel nome scrivi "non importato", viene tenuto nel gruppo NON importati.
+      if (/\bnon\s+import/.test(text)) return false;
+      return text.includes('import');
+    }
+
+    function getTypePdfSections(typeData) {
+      if (!isListellariType(typeData.tipo)) {
+        return [{ title: '', items: typeData.items }];
+      }
+
+      const imported = typeData.items.filter(isImportedInventoryItem);
+      const notImported = typeData.items.filter(g => !isImportedInventoryItem(g));
+      return [
+        { title: 'Listellari importati', items: imported },
+        { title: 'Listellari non importati', items: notImported }
+      ].filter(section => section.items.length > 0);
+    }
+
+    function getLowStockPdfSections(types, threshold) {
+      const sections = [];
+      types.forEach(t => {
+        const lowItems = t.items.filter(g => g.total <= threshold);
+        if (!lowItems.length) return;
+
+        if (isListellariType(t.tipo)) {
+          const imported = lowItems.filter(isImportedInventoryItem);
+          const notImported = lowItems.filter(g => !isImportedInventoryItem(g));
+          if (imported.length) sections.push({ title: `${t.tipo} — importati`, items: imported });
+          if (notImported.length) sections.push({ title: `${t.tipo} — non importati`, items: notImported });
+        } else {
+          sections.push({ title: t.tipo, items: lowItems });
+        }
+      });
+      return sections;
+    }
+
+    function addPdfFooter(doc, label, margin) {
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(140);
+        doc.text(`Pagina ${i} / ${pageCount}`, pageW - margin, pageH - 7, { align: 'right' });
+        doc.text(label, margin, pageH - 7);
+      }
+      doc.setTextColor(0);
+    }
+
+    function ensurePdfSpace(doc, y, needed = 30) {
+      const pageH = doc.internal.pageSize.getHeight();
+      if (y + needed > pageH - 16) {
+        doc.addPage();
+        return 18;
+      }
+      return y;
+    }
+
+    function addInventoryPdfSection(doc, section, threshold, startY, margin, options = {}) {
+      if (!section.items.length) return startY;
+
+      let y = ensurePdfSpace(doc, startY, 28);
+      if (section.title) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text(section.title, margin, y);
+        y += 5;
+      }
+
+      const summaryRows = section.items.map(g => {
+        const isLow = g.total <= threshold;
+        const row = [
+          g.nome,
+          dimsLabel(g),
+          formatQty(g.total),
+          g.locations.length,
+          isLow ? 'IN ESAURIMENTO' : ''
+        ];
+        if (options.showType) row.unshift(g.tipo);
+        return row;
+      });
+
+      const summaryHead = options.showType
+        ? [['Tipo', 'Nome', 'Dimensioni (L × W × Sp.)', 'Pezzi tot.', 'Posizioni', 'Stato']]
+        : [['Nome', 'Dimensioni (L × W × Sp.)', 'Pezzi tot.', 'Posizioni', 'Stato']];
+
+      doc.autoTable({
+        startY: y,
+        head: summaryHead,
+        body: summaryRows,
+        theme: 'striped',
+        headStyles: { fillColor: [40, 60, 100], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 8.6, cellPadding: 2.3 },
+        columnStyles: options.showType
+          ? { 3: { halign: 'right', fontStyle: 'bold' }, 4: { halign: 'right' }, 5: { halign: 'center', textColor: [180, 60, 50], fontStyle: 'bold' } }
+          : { 2: { halign: 'right', fontStyle: 'bold' }, 3: { halign: 'right' }, 4: { halign: 'center', textColor: [180, 60, 50], fontStyle: 'bold' } },
+        didParseCell: (data) => {
+          const last = data.row.raw?.[data.row.raw.length - 1];
+          if (data.section === 'body' && last === 'IN ESAURIMENTO') {
+            data.cell.styles.fillColor = [255, 235, 235];
+          }
+        },
+        margin: { left: margin, right: margin }
+      });
+
+      y = doc.lastAutoTable.finalY + 8;
+      y = ensurePdfSpace(doc, y, 24);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      doc.text(section.title ? `Dettaglio posizioni — ${section.title}` : 'Dettaglio posizioni', margin, y);
+      y += 4;
+
+      const detailRows = [];
+      section.items.forEach(g => {
+        g.locations.forEach(loc => {
+          const row = [
+            g.nome,
+            dimsLabel(g),
+            loc.codice || '—',
+            loc.origine || '—',
+            loc.shelfLabel || '—',
+            loc.posizione || '—',
+            formatQty(loc.qty)
+          ];
+          if (options.showType) row.unshift(g.tipo);
+          detailRows.push(row);
+        });
+      });
+
+      const detailHead = options.showType
+        ? [['Tipo', 'Nome', 'Dimensioni', 'Codice', 'Origine', 'Scaffale', 'Posizione', 'Pezzi']]
+        : [['Nome', 'Dimensioni', 'Codice', 'Origine', 'Scaffale', 'Posizione', 'Pezzi']];
+
+      doc.autoTable({
+        startY: y + 2,
+        head: detailHead,
+        body: detailRows,
+        theme: 'grid',
+        headStyles: { fillColor: [80, 80, 80], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 7.7, cellPadding: 1.8 },
+        columnStyles: options.showType ? { 7: { halign: 'right', fontStyle: 'bold' } } : { 6: { halign: 'right', fontStyle: 'bold' } },
+        margin: { left: margin, right: margin }
+      });
+
+      return doc.lastAutoTable.finalY + 10;
+    }
+
     async function generateTypePdf(typeData, threshold) {
       const { jsPDF } = await ensureJsPdf();
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-
-      const pageW = doc.internal.pageSize.getWidth();
       const margin = 14;
 
-      // Header
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(18);
       doc.text(`Resoconto inventario — ${typeData.tipo}`, margin, 18);
@@ -1358,7 +1582,6 @@
       doc.text(`Generato il ${generatedAt}`, margin, 24);
       doc.setTextColor(0);
 
-      // Sommario
       const totDims = typeData.items.length;
       const totQty = typeData.items.reduce((s, g) => s + g.total, 0);
       const lowItems = typeData.items.filter(g => g.total <= threshold);
@@ -1372,89 +1595,63 @@
       doc.text(`• Dimensioni distinte: ${totDims}`, margin, 42);
       doc.text(`• Pezzi totali: ${formatQty(totQty)}`, margin, 47);
       doc.text(`• In esaurimento (≤ ${formatQty(threshold)} pezzi): ${lowItems.length} dimensioni / ${formatQty(lowQty)} pezzi`, margin, 52);
-
-      // Tabella riepilogo dimensioni
-      const dimRows = typeData.items.map(g => {
-        const dims = [g.lunghezza, g.larghezza, g.spessore].filter(Boolean).join(' × ') || '—';
-        const isLow = g.total <= threshold;
-        return [
-          g.nome,
-          dims,
-          formatQty(g.total),
-          g.locations.length,
-          isLow ? 'IN ESAURIMENTO' : ''
-        ];
-      });
-
-      doc.autoTable({
-        startY: 60,
-        head: [['Nome', 'Dimensioni (L × W × Sp.)', 'Pezzi tot.', 'Posizioni', 'Stato']],
-        body: dimRows,
-        theme: 'striped',
-        headStyles: { fillColor: [40, 60, 100], textColor: 255, fontStyle: 'bold' },
-        styles: { fontSize: 9, cellPadding: 2.5 },
-        columnStyles: {
-          2: { halign: 'right', fontStyle: 'bold' },
-          3: { halign: 'right' },
-          4: { halign: 'center', textColor: [180, 60, 50], fontStyle: 'bold' }
-        },
-        didParseCell: (data) => {
-          if (data.section === 'body' && data.row.raw[4] === 'IN ESAURIMENTO') {
-            data.cell.styles.fillColor = [255, 235, 235];
-          }
-        },
-        margin: { left: margin, right: margin }
-      });
-
-      // Tabella dettaglio per posizione
-      let y = doc.lastAutoTable.finalY + 10;
-      if (y > 250) { doc.addPage(); y = 18; }
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('Dettaglio per posizione', margin, y);
-      y += 4;
-
-      const detailRows = [];
-      typeData.items.forEach(g => {
-        const dims = [g.lunghezza, g.larghezza, g.spessore].filter(Boolean).join(' × ') || '—';
-        g.locations.forEach(loc => {
-          detailRows.push([
-            g.nome,
-            dims,
-            loc.codice || '—',
-            loc.origine || '—',
-            loc.shelfLabel || '—',
-            loc.posizione || '—',
-            formatQty(loc.qty)
-          ]);
-        });
-      });
-
-      doc.autoTable({
-        startY: y + 2,
-        head: [['Nome', 'Dimensioni', 'Codice', 'Origine', 'Scaffale', 'Posizione', 'Pezzi']],
-        body: detailRows,
-        theme: 'grid',
-        headStyles: { fillColor: [80, 80, 80], textColor: 255, fontStyle: 'bold' },
-        styles: { fontSize: 8, cellPadding: 2 },
-        columnStyles: {
-          6: { halign: 'right', fontStyle: 'bold' }
-        },
-        margin: { left: margin, right: margin }
-      });
-
-      // Footer con paginazione
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8); doc.setTextColor(140);
-        doc.text(`Pagina ${i} / ${pageCount}`, pageW - margin, 290, { align: 'right' });
-        doc.text(`Magazzino — ${typeData.tipo}`, margin, 290);
+      if (isListellariType(typeData.tipo)) {
+        doc.text('• Questo PDF distingue i listellari importati da quelli non importati.', margin, 57);
       }
 
-      const safeName = typeData.tipo.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      let y = isListellariType(typeData.tipo) ? 66 : 60;
+      getTypePdfSections(typeData).forEach(section => {
+        y = addInventoryPdfSection(doc, section, threshold, y, margin);
+      });
+
+      addPdfFooter(doc, `Magazzino — ${typeData.tipo}`, margin);
       const dateStamp = new Date().toISOString().slice(0, 10);
-      doc.save(`inventario_${safeName}_${dateStamp}.pdf`);
+      doc.save(`inventario_${safePdfName(typeData.tipo)}_${dateStamp}.pdf`);
+    }
+
+    async function generateLowStockPdf(types, threshold) {
+      const sections = getLowStockPdfSections(types, threshold);
+      if (!sections.length) {
+        alert('Nessun materiale in esaurimento con la soglia attuale.');
+        return;
+      }
+
+      const { jsPDF } = await ensureJsPdf();
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const margin = 14;
+      const lowItems = sections.flatMap(section => section.items);
+      const totalQty = lowItems.reduce((s, g) => s + g.total, 0);
+      const typeCount = new Set(lowItems.map(g => g.tipo)).size;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('Materiale in esaurimento', margin, 18);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      const generatedAt = new Date().toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' });
+      doc.text(`Generato il ${generatedAt}`, margin, 24);
+      doc.setTextColor(0);
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Sommario', margin, 36);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`• Soglia in esaurimento: ≤ ${formatQty(threshold)} pezzi`, margin, 42);
+      doc.text(`• Categorie coinvolte: ${typeCount}`, margin, 47);
+      doc.text(`• Dimensioni in esaurimento: ${lowItems.length}`, margin, 52);
+      doc.text(`• Pezzi totali in esaurimento: ${formatQty(totalQty)}`, margin, 57);
+
+      let y = 66;
+      sections.forEach(section => {
+        y = addInventoryPdfSection(doc, section, threshold, y, margin, { showType: true });
+      });
+
+      addPdfFooter(doc, 'Magazzino — materiale in esaurimento', margin);
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      doc.save(`inventario_materiale_in_esaurimento_${dateStamp}.pdf`);
     }
 
     /* ── Inventario aggregato ── */
@@ -1550,36 +1747,6 @@
       return n.toFixed(2).replace(/\.?0+$/, '');
     }
 
-    function buildInvCardHtml(group, isLow) {
-      const dimsParts = [group.lunghezza, group.larghezza, group.spessore].filter(Boolean);
-      const dimsLabel = dimsParts.length ? dimsParts.join(' × ') : 'dimensioni n/d';
-      const locs = group.locations.map(loc =>
-        `<button class="inv-loc" data-goto-origin="${escapeHtml(loc.origine)}" data-goto-shelf="${escapeHtml(loc.shelfKey)}" title="${escapeHtml(loc.codice)} · ${escapeHtml(loc.posizione)}">
-          <span>${escapeHtml(loc.origine)} · ${escapeHtml(loc.shelfLabel)}</span>
-          <span class="qty">${escapeHtml(formatQty(loc.qty))}</span>
-        </button>`
-      ).join('');
-
-      // Mostra il nome completo solo se diverso dal tipo (es. "MDF Pioppo" sotto sezione "MDF")
-      const showFullName = group.nome.toUpperCase() !== group.tipo;
-      const heading = showFullName ? group.nome : dimsLabel;
-      const sub = showFullName ? dimsLabel : '';
-
-      return `<div class="inv-card${isLow ? ' low' : ''}" data-inv-key="${escapeHtml(group.key)}">
-        <div class="inv-card-head">
-          <div>
-            <div class="inv-name">${escapeHtml(heading)}</div>
-            ${sub ? `<div class="inv-dims">${escapeHtml(sub)}</div>` : ''}
-          </div>
-          <div class="inv-total">
-            ${escapeHtml(formatQty(group.total))}
-            <span class="unit">pezzi</span>
-          </div>
-        </div>
-        <div class="inv-locations">${locs}</div>
-      </div>`;
-    }
-
     function renderInventory() {
       if (state.currentScreen !== 'inventory') return;
 
@@ -1604,9 +1771,9 @@
       el.invStatTypes.textContent = allTypesCount;
       el.invStatTotal.textContent = formatQty(allTotalQty);
       el.invStatLow.textContent = allLowCount;
-      el.inventoryMeta.textContent = `${allTypesCount} tipi · ${formatQty(allTotalQty)} pezzi totali`;
+      el.inventoryMeta.textContent = `${allTypesCount} categorie · ${formatQty(allTotalQty)} pezzi totali · ogni voce apre un PDF`;
 
-      // Applico ricerca: cerco match su tipo, nome e dimensioni dei singoli items.
+      // Ricerca: se cerchi una categoria, un nome o una dimensione, il PDF generato usa solo i risultati filtrati.
       const matches = (g) => !q ||
         g.tipo.toLowerCase().includes(q) ||
         g.nome.toLowerCase().includes(q) ||
@@ -1618,102 +1785,104 @@
         .map(t => ({ ...t, items: t.items.filter(matches) }))
         .filter(t => t.items.length > 0);
 
-      // Pre-calcolo "in esaurimento" per ogni tipo (tra gli items filtrati)
       filteredTypes.forEach(t => {
         t.lowItems = t.items.filter(g => g.total <= threshold);
         t.okItems  = t.items.filter(g => g.total >  threshold);
       });
 
-      let html = '';
-
       if (!filteredTypes.length) {
-        html = '<div class="panel"><div class="empty">Nessun prodotto da mostrare.</div></div>';
-        el.inventoryContent.innerHTML = html;
+        el.inventoryContent.innerHTML = '<div class="panel"><div class="empty">Nessuna categoria da mostrare.</div></div>';
         return;
       }
 
-      // SEZIONE 1: In esaurimento (raggruppato per tipo)
-      const typesWithLow = filteredTypes.filter(t => t.lowItems.length > 0);
-      if (typesWithLow.length) {
-        const totalLow = typesWithLow.reduce((s, t) => s + t.lowItems.length, 0);
-        html += `<div class="panel inv-section danger">
-          <div class="inv-section-title">⚠ In esaurimento <span class="count">(≤ ${escapeHtml(formatQty(threshold))} pezzi · ${totalLow} dimensioni in ${typesWithLow.length} tipi)</span></div>
-          ${typesWithLow.map(t => `
-            <div class="inv-type-block">
-              <div class="inv-type-head">
-                <div class="left">
-                  <div class="inv-type-name">${escapeHtml(t.tipo)}</div>
-                  <div class="inv-type-stats">${t.lowItems.length} dimensioni in esaurimento</div>
-                </div>
-              </div>
-              <div class="inv-grid">
-                ${t.lowItems.map(g => buildInvCardHtml(g, true)).join('')}
-              </div>
-            </div>
-          `).join('')}
-        </div>`;
-      }
+      const lowItems = filteredTypes.flatMap(t => t.lowItems);
+      const lowQty = lowItems.reduce((s, g) => s + g.total, 0);
+      const lowTypesCount = new Set(lowItems.map(g => g.tipo)).size;
 
-      // SEZIONE 2: Inventario completo per tipo (con bottone PDF per tipo)
+      let html = '';
+
+      // Categoria unica separata per tutto il materiale in esaurimento.
+      html += `<div class="panel inv-section danger">
+        <div class="inv-section-title">Categoria speciale <span class="count">(PDF unico)</span></div>
+        <div class="inv-category-list">
+          <button class="inv-category-row danger" data-pdf-low="1" ${lowItems.length ? '' : 'disabled'}>
+            <span class="inv-category-main">
+              <span class="inv-category-title">⚠ Materiale in esaurimento</span>
+              <span class="inv-category-meta">
+                ${lowItems.length
+                  ? `${lowItems.length} dimensioni · ${formatQty(lowQty)} pezzi · ${lowTypesCount} categorie coinvolte · soglia ≤ ${formatQty(threshold)}`
+                  : `Nessun materiale sotto soglia ≤ ${formatQty(threshold)}`}
+              </span>
+            </span>
+            <span class="inv-category-link">${lowItems.length ? 'Apri PDF →' : 'Nessun PDF'}</span>
+          </button>
+        </div>
+      </div>`;
+
+      // Lista pulita: una voce per categoria, senza card dei prodotti.
       html += `<div class="panel inv-section">
-        <div class="inv-section-title">Inventario per tipo <span class="count">(${filteredTypes.length} tipi)</span></div>
-        ${filteredTypes.map(t => {
-          const totLow = t.lowItems.length;
-          const totQty = t.items.reduce((s, g) => s + g.total, 0);
-          const totDims = t.items.length;
-          return `<div class="inv-type-block">
-            <div class="inv-type-head">
-              <div class="left">
-                <div class="inv-type-name">${escapeHtml(t.tipo)}</div>
-                <div class="inv-type-stats">
-                  ${totDims} dimensioni · ${formatQty(totQty)} pezzi
-                  ${totLow ? `<span class="lowflag">· ${totLow} ⚠</span>` : ''}
-                </div>
-              </div>
-              <button class="btn compact primary inv-pdf-btn" data-pdf-type="${escapeHtml(t.tipo)}">📄 PDF</button>
-            </div>
-            <div class="inv-grid">
-              ${t.items.map(g => buildInvCardHtml(g, g.total <= threshold)).join('')}
-            </div>
-          </div>`;
-        }).join('')}
+        <div class="inv-section-title">Inventario per categoria <span class="count">(${filteredTypes.length} categorie)</span></div>
+        <div class="inv-category-list">
+          ${filteredTypes.map(t => {
+            const totLow = t.lowItems.length;
+            const totQty = t.items.reduce((s, g) => s + g.total, 0);
+            const totDims = t.items.length;
+            const listellariNote = isListellariType(t.tipo) ? ' · PDF diviso in importati / non importati' : '';
+            return `<button class="inv-category-row" data-pdf-type="${escapeHtml(t.tipo)}">
+              <span class="inv-category-main">
+                <span class="inv-category-title">${escapeHtml(t.tipo)}</span>
+                <span class="inv-category-meta">
+                  ${totDims} dimensioni · ${formatQty(totQty)} pezzi${totLow ? ` · ${totLow} in esaurimento` : ''}${escapeHtml(listellariNote)}
+                </span>
+              </span>
+              <span class="inv-category-link">Apri PDF →</span>
+            </button>`;
+          }).join('')}
+        </div>
       </div>`;
 
       el.inventoryContent.innerHTML = html;
 
-      // Click su location chip → vai allo scaffale
-      el.inventoryContent.querySelectorAll('.inv-loc').forEach(btn => {
-        btn.onclick = (e) => {
+      const setPdfLoading = (btn, isLoading, originalText) => {
+        const link = btn.querySelector('.inv-category-link');
+        btn.disabled = isLoading;
+        if (link) link.textContent = isLoading ? 'Genero…' : originalText;
+      };
+
+      // Click sulla categoria speciale → PDF unico del materiale in esaurimento.
+      el.inventoryContent.querySelectorAll('[data-pdf-low]').forEach(btn => {
+        btn.onclick = async (e) => {
           e.stopPropagation();
-          const origine = btn.dataset.gotoOrigin;
-          const shelfKey = btn.dataset.gotoShelf;
-          state.selectedOrigin = origine;
-          state.selectedShelfKey = shelfKey;
-          state.currentScreen = 'shelf';
-          el.shelfSearchInput.value = '';
-          el.productSearchInput.value = '';
-          render();
+          if (!lowItems.length) return;
+          const original = btn.querySelector('.inv-category-link')?.textContent || 'Apri PDF →';
+          setPdfLoading(btn, true, original);
+          try {
+            await generateLowStockPdf(filteredTypes, threshold);
+          } catch (err) {
+            console.error(err);
+            alert('Errore generazione PDF: ' + (err.message || err));
+          } finally {
+            setPdfLoading(btn, false, original);
+          }
         };
       });
 
-      // Click su pulsante PDF → genera resoconto del tipo
+      // Click su categoria normale → PDF della categoria.
       el.inventoryContent.querySelectorAll('[data-pdf-type]').forEach(btn => {
         btn.onclick = async (e) => {
           e.stopPropagation();
           const tipo = btn.dataset.pdfType;
           const typeData = filteredTypes.find(t => t.tipo === tipo);
           if (!typeData) return;
-          btn.disabled = true;
-          const original = btn.textContent;
-          btn.textContent = '⏳ Genero…';
+          const original = btn.querySelector('.inv-category-link')?.textContent || 'Apri PDF →';
+          setPdfLoading(btn, true, original);
           try {
             await generateTypePdf(typeData, threshold);
           } catch (err) {
             console.error(err);
             alert('Errore generazione PDF: ' + (err.message || err));
           } finally {
-            btn.disabled = false;
-            btn.textContent = original;
+            setPdfLoading(btn, false, original);
           }
         };
       });
