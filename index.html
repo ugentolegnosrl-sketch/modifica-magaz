@@ -1654,6 +1654,72 @@
       doc.save(`inventario_${safePdfName(typeData.tipo)}_${dateStamp}.pdf`);
     }
 
+    function measuresLabel(group) {
+      const lunghezza = normalizeText(group.lunghezza) || '—';
+      const larghezza = normalizeText(group.larghezza) || '—';
+      if (lunghezza === '—' && larghezza === '—') return '—';
+      return `${lunghezza} × ${larghezza}`;
+    }
+
+    function addLowStockSimpleSection(doc, section, startY, margin) {
+      if (!section.items.length) return startY;
+
+      let y = ensurePdfSpace(doc, startY, 34);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(0);
+      doc.text(section.title, margin, y);
+      y += 5;
+
+      const rows = [...section.items]
+        .sort((a, b) =>
+          String(a.nome).localeCompare(String(b.nome), 'it') ||
+          String(a.spessore).localeCompare(String(b.spessore), 'it', { numeric: true }) ||
+          String(a.lunghezza).localeCompare(String(b.lunghezza), 'it', { numeric: true }) ||
+          String(a.larghezza).localeCompare(String(b.larghezza), 'it', { numeric: true })
+        )
+        .map(g => [
+          g.nome || '(senza nome)',
+          measuresLabel(g),
+          normalizeText(g.spessore) || '—',
+          formatQty(g.total)
+        ]);
+
+      doc.autoTable({
+        startY: y + 2,
+        head: [['Materiale', 'Misure', 'Spessore', 'Pezzi']],
+        body: rows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [30, 45, 75],
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 11,
+          halign: 'center'
+        },
+        styles: {
+          fontSize: 11,
+          cellPadding: 3.2,
+          overflow: 'linebreak',
+          valign: 'middle',
+          textColor: [20, 20, 20],
+          lineColor: [190, 190, 190],
+          lineWidth: 0.2
+        },
+        bodyStyles: { minCellHeight: 9 },
+        alternateRowStyles: { fillColor: [247, 249, 252] },
+        columnStyles: {
+          0: { cellWidth: 78, fontStyle: 'bold' },
+          1: { cellWidth: 43, halign: 'center', fontStyle: 'bold' },
+          2: { cellWidth: 30, halign: 'center', fontStyle: 'bold' },
+          3: { cellWidth: 22, halign: 'center', fontStyle: 'bold' }
+        },
+        margin: { left: margin, right: margin }
+      });
+
+      return doc.lastAutoTable.finalY + 12;
+    }
+
     async function generateLowStockPdf(types, threshold) {
       const sections = getLowStockPdfSections(types, threshold);
       if (!sections.length) {
@@ -1666,32 +1732,21 @@
       const margin = 14;
       const lowItems = sections.flatMap(section => section.items);
       const totalQty = lowItems.reduce((s, g) => s + g.total, 0);
-      const typeCount = new Set(lowItems.map(g => g.tipo)).size;
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
+      doc.setFontSize(20);
+      doc.setTextColor(0);
       doc.text('Materiale in esaurimento', margin, 18);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor(100);
-      const generatedAt = new Date().toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' });
-      doc.text(`Generato il ${generatedAt}`, margin, 24);
+      doc.setFontSize(11);
+      doc.setTextColor(70);
+      doc.text(`Soglia in esaurimento: ≤ ${formatQty(threshold)} pezzi · Totale materiale: ${lowItems.length}`, margin, 26);
       doc.setTextColor(0);
 
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Sommario', margin, 36);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`• Soglia in esaurimento: ≤ ${formatQty(threshold)} pezzi`, margin, 42);
-      doc.text(`• Categorie coinvolte: ${typeCount}`, margin, 47);
-      doc.text(`• Dimensioni in esaurimento: ${lowItems.length}`, margin, 52);
-      doc.text(`• Pezzi totali in esaurimento: ${formatQty(totalQty)}`, margin, 57);
-
-      let y = 66;
+      let y = 38;
       sections.forEach(section => {
-        y = addInventoryPdfSection(doc, section, threshold, y, margin, { showType: true });
+        y = addLowStockSimpleSection(doc, section, y, margin);
       });
 
       addPdfFooter(doc, 'Magazzino — materiale in esaurimento', margin);
